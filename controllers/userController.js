@@ -76,7 +76,7 @@ export function loginUser(req,res){
             }
          }
     )
-    //testing commit
+   
 }
 
 export function isAdmin(req){
