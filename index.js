@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import productRouter from './routs/productRouter.js';
 import userRouter from './routs/userRouter.js';
 import jwt from "jsonwebtoken";
+import orderRouter from './routs/orderRouter.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ mongoose.connect("mongodb+srv://Admin:123@cluster0.wxlx2pv.mongodb.net/?retryWri
 
 app.use("/products", productRouter)
 app.use("/users", userRouter)
+app.use("/orders", orderRouter)
 
 //mongodb+srv://Admin:123@cluster0.sijs1es.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 app.listen(3000, () => {
