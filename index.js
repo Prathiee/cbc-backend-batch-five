@@ -5,10 +5,12 @@ import productRouter from './routs/productRouter.js';
 import userRouter from './routs/userRouter.js';
 import jwt from "jsonwebtoken";
 import orderRouter from './routs/orderRouter.js';
+import cors from 'cors';
 
 const app = express();
-
+app.use(cors())
 app.use(bodyParser.json())
+
 
 app.use((req,res,next)=>{
        const tokenString = req.header("Authorization")
