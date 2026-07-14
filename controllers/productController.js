@@ -56,8 +56,9 @@ export function saveProduct(req, res){
     }
 
     export async function deleteProduct(req,res){
-        if(isAdmin(req)){
-            res.status(403).json({
+        if(!isAdmin(req)){
+            // methana check krnn oni isAdmin nowana ayt me msg eka yanna. ekai not(!) kiyala damme
+             res.status(403).json({
                 message: "You are not authorized to delete a product"
             })
             return
