@@ -5,6 +5,7 @@ import productRouter from './routs/productRouter.js';
 import userRouter from './routs/userRouter.js';
 import jwt from "jsonwebtoken";
 import orderRouter from './routs/orderRouter.js';
+import recommendationRouter from "./routs/recommendationRouter.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -51,6 +52,7 @@ mongoose.connect(process.env.MONGODB_URL).then(()=>{
 app.use("/products", productRouter)
 app.use("/users", userRouter)
 app.use("/orders", orderRouter)
+app.use("/recommendation", recommendationRouter);
 
 //mongodb+srv://Admin:123@cluster0.sijs1es.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 app.listen(3000, () => {
