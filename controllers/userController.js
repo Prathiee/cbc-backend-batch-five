@@ -60,15 +60,16 @@ export function loginUser(req,res){
                 const isPasswordCorrect = bcrypt.compareSync(password, user.password)
                 if(isPasswordCorrect){
                     const token = jwt.sign(
-                        {
-                            email : user.email,
-                            firstName : user.firstName,
-                            lastName : user.lastName,
-                            role : user.role,
-                            img : user.img
-                        },
-                        process.env.JWT_KEY
-                    )
+    {
+        userId: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        img: user.img
+    },
+    process.env.JWT_KEY
+);
 
                     res.json({
                         message : "Login Successful",
@@ -130,15 +131,16 @@ export async function googleLogin(req, res) {
 
         // Create JWT for both new and existing users
         const jwtToken = jwt.sign(
-            {
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.role,
-                img: user.img
-            },
-            process.env.JWT_KEY
-        );
+    {
+        userId: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        img: user.img
+    },
+    process.env.JWT_KEY
+);
 
         res.json({
             message: "Login Successful",
@@ -156,61 +158,140 @@ export async function googleLogin(req, res) {
 }
 
 const transport = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: "prathiliyanapathirana7@gmail.com",
-        pass: "xqimizsiusqaqmia"
-    }
+    service: "gmail",
 
-})
+    auth: {
+        user: process.env.CONTACT_EMAIL,
+        pass: process.env.CONTACT_EMAIL_PASSWORD
+    }
+});
 export async function sendOTP(req, res) {
-    const randomOTP = Math.floor(100000 + Math.random() * 900000);
-    const email = req.body.email;
-    if(email == null){
-        res.status(400).json({
-            message: "Email is required"
-        });
-        return;
-    }
-    const user = await User.findOne({
-        email: email
-    })
-    if(user == null){
-        res.status(404).json({
-            message:"User not found"
-        })
-    }
-    //DELETE ALL OTPS
-    await OTP.deleteMany({
-        email: email
-    })
-    const message = {
-        from: "prathiliyanapathirana7@gmail.com",
-        to: email,
-        subject: "Resetting password for GlowGuide",
-        text: "This your password reset OTP : " + randomOTP
-    }
-    const otp = new OTP({
-        email: email,
-        otp: randomOTP
-    })
-    await otp.save()
-    transport.sendMail(message,(error,infor)=>{
-        if(error){
-            res.status(500).json({
-                message: "Failed to send OTP",
-                error: error
-            });
-        }else{
-            res.json({
-                message: "OTP sent successfully",
-                otp: randomOTP
+
+    try {
+
+        const email = req.body.email;
+
+
+        // ==========================================
+        // CHECK EMAIL
+        // ==========================================
+
+        if (!email) {
+
+            return res.status(400).json({
+                message: "Email is required"
             });
         }
-    })
+
+
+        // ==========================================
+        // FIND USER
+        // ==========================================
+
+        const user = await User.findOne({
+            email: email.trim().toLowerCase()
+        });
+
+
+        if (!user) {
+
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+
+        // ==========================================
+        // GENERATE 6 DIGIT OTP
+        // ==========================================
+
+        const randomOTP =
+            Math.floor(100000 + Math.random() * 900000);
+
+
+        // ==========================================
+        // DELETE PREVIOUS OTPs
+        // ==========================================
+
+        await OTP.deleteMany({
+            email: email.trim().toLowerCase()
+        });
+
+
+        // ==========================================
+        // SAVE NEW OTP
+        // ==========================================
+
+        const otp = new OTP({
+
+            email: email.trim().toLowerCase(),
+
+            otp: randomOTP
+        });
+
+
+        await otp.save();
+
+
+        // ==========================================
+        // EMAIL
+        // ==========================================
+
+        const message = {
+
+            from:
+                `"Glow Guide Customer Care" <${process.env.CONTACT_EMAIL}>`,
+
+            to: email.trim().toLowerCase(),
+
+            subject: "Glow Guide Password Reset OTP",
+
+            text:
+`Hello ${user.firstName},
+
+We received a request to reset your Glow Guide password.
+
+Your password reset OTP is:
+
+${randomOTP}
+
+Please enter this OTP on the Glow Guide password reset page.
+
+If you did not request a password reset, you can ignore this email.
+
+Kind regards,
+Glow Guide Customer Care
+Beauty at your side ♡`
+        };
+
+
+        // ==========================================
+        // SEND EMAIL
+        // ==========================================
+
+        await transport.sendMail(message);
+
+
+        // IMPORTANT:
+        // Do NOT return OTP to frontend
+
+        return res.json({
+            message: "OTP sent successfully"
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "OTP sending error:",
+            error
+        );
+
+
+        return res.status(500).json({
+            message: "Failed to send OTP"
+        });
+    }
 }
 
 export async function resetPassword(req, res) {
@@ -248,17 +329,46 @@ export async function resetPassword(req, res) {
     }
 }
 
-export function getUser(req,res){
-    if(req.user == null){
-        res.status(403).json({
-            message: "You are not authorized to view user details"
-        })
-        return
-        
-    }else{
-        res.json({
-            ...req.user
-        })
+export async function getUser(req, res) {
+
+    try {
+
+        // Check whether customer is logged in
+        if (req.user == null) {
+
+            return res.status(401).json({
+                message: "Please login first"
+            });
+        }
+
+
+        // Get the latest customer information
+        // from MongoDB using the userId inside JWT
+        const user = await User
+            .findById(req.user.userId)
+            .select("-password");
+
+
+        // Customer no longer exists
+        if (!user) {
+
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+
+        // Send customer details to frontend
+        res.json(user);
+
+
+    } catch (error) {
+
+        console.error("Get user error:", error);
+
+        res.status(500).json({
+            message: "Failed to get user details"
+        });
     }
 }
 
@@ -273,3 +383,180 @@ export function isAdmin(req){
    return true
 }
 
+// ======================================================
+// GET ALL USERS - ADMIN ONLY
+// ======================================================
+
+export async function getAllUsers(req, res) {
+
+    try {
+
+        if (!isAdmin(req)) {
+            return res.status(403).json({
+                message: "You are not authorized to view all users"
+            });
+        }
+
+        // Do not send passwords to the frontend
+        const users = await User.find().select("-password");
+
+        res.json(users);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to get users"
+        });
+    }
+}
+
+
+// ======================================================
+// GET ONE USER - ADMIN ONLY
+// ======================================================
+
+export async function getUserById(req, res) {
+
+    try {
+
+        if (!isAdmin(req)) {
+            return res.status(403).json({
+                message: "You are not authorized to view this user"
+            });
+        }
+
+        const user = await User
+            .findById(req.params.userId)
+            .select("-password");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json(user);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to get user"
+        });
+    }
+}
+
+
+// ======================================================
+// UPDATE USER - ADMIN ONLY
+// ======================================================
+
+export async function updateUser(req, res) {
+
+    try {
+
+        if (!isAdmin(req)) {
+            return res.status(403).json({
+                message: "You are not authorized to update users"
+            });
+        }
+
+        const userId = req.params.userId;
+
+        const updateData = {};
+
+        if (req.body.firstName !== undefined) {
+            updateData.firstName = req.body.firstName;
+        }
+
+        if (req.body.lastName !== undefined) {
+            updateData.lastName = req.body.lastName;
+        }
+
+        if (req.body.email !== undefined) {
+            updateData.email = req.body.email;
+        }
+
+        if (req.body.role !== undefined) {
+            updateData.role = req.body.role;
+        }
+
+        if (req.body.isBlocked !== undefined) {
+            updateData.isBlocked = req.body.isBlocked;
+        }
+
+        if (req.body.img !== undefined) {
+            updateData.img = req.body.img;
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            updateData,
+            {
+                new: true,
+                runValidators: true
+            }
+        ).select("-password");
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            message: "User updated successfully",
+            user: updatedUser
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to update user"
+        });
+    }
+}
+
+
+// ======================================================
+// DELETE USER - ADMIN ONLY
+// ======================================================
+
+export async function deleteUser(req, res) {
+
+    try {
+
+        if (!isAdmin(req)) {
+            return res.status(403).json({
+                message: "You are not authorized to delete users"
+            });
+        }
+
+        const user = await User.findByIdAndDelete(
+            req.params.userId
+        );
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            message: "User deleted successfully"
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to delete user"
+        });
+    }
+}
