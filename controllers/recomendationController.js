@@ -235,6 +235,12 @@ export async function findRecommendations(req, res) {
 
         const results = [];
 
+        const excludedReasons = {
+    category: 0,
+    sensitivity: 0,
+    lowMatch: 0
+};
+
 
         // ==================================================
         // CHECK EVERY RECOMMENDATION RECORD
@@ -294,6 +300,8 @@ if (product.category !== "Skin Care") {
     console.log(
         `Excluded ${product.name} because category is ${product.category}`
     );
+
+    excludedReasons.category++;
 
     continue;
 }
@@ -519,94 +527,132 @@ if (selectedConcerns.length > 0) {
 
 
             // ==============================================
-            // 4. INGREDIENT SAFETY
-            // MAXIMUM = 25 POINTS
+// 4. SMART INGREDIENT SAFETY
+// MAXIMUM = 25 POINTS
+// ==============================================
+
+// Customer sensitivities selected in the Beauty Quiz
+const selectedSensitivities = Array.isArray(ingredientWarnings)
+    ? ingredientWarnings
+    : [];
+
+// Ingredient warnings stored for this product
+const productWarnings = Array.isArray(
+    recommendation.ingredientWarnings
+)
+    ? recommendation.ingredientWarnings
+    : [];
+
+// Find warnings that conflict with the customer's sensitivities
+const conflicts = selectedSensitivities.filter(
+    (customerSensitivity) =>
+        productWarnings.some(
+            (productWarning) =>
+                String(productWarning)
+                    .toLowerCase()
+                    .trim() ===
+                String(customerSensitivity)
+                    .toLowerCase()
+                    .trim()
+        )
+);
+
+// ==============================================
+// CUSTOMER SELECTED SENSITIVITIES
+// ==============================================
+
+if (selectedSensitivities.length > 0) {
+
+    console.log(
+        `${product.name} sensitivity check: ` +
+        `Customer selected = ${selectedSensitivities.join(", ")} | ` +
+        `Product warnings = ${
+            productWarnings.length > 0
+                ? productWarnings.join(", ")
+                : "None"
+        }`
+    );
+
+    // ------------------------------------------
+    // SAFETY CONFLICT FOUND
+    // ------------------------------------------
+
+    if (conflicts.length > 0) {
+
+    console.log(
+        `Excluded ${product.name} because of ` +
+        `ingredient sensitivity conflict: ` +
+        `${conflicts.join(", ")}`
+    );
+
+    // Count products removed because of sensitivity conflicts
+    excludedReasons.sensitivity++;
+
+    // Do not recommend a product that conflicts
+    // with the customer's selected sensitivities.
+    continue;
+}
+    // ------------------------------------------
+    // NO CONFLICT
+    // ------------------------------------------
+
+    score += 25;
+
+    reasons.push(
+        `No conflict with your selected sensitivities`
+    );
+
+    console.log(
+        `${product.name} ingredient safety: ` +
+        `No conflicts | Safety score: 25/25`
+    );
+
+} else {
+
+    // Customer did not provide sensitivity information.
+    // Do not claim the product is sensitivity-safe and
+    // do not award safety points without evidence.
+
+    reasons.push(
+        `No ingredient sensitivities selected`
+    );
+
+    console.log(
+        `${product.name} ingredient safety: ` +
+        `No sensitivities selected | Safety score: 0/25`
+    );
+}
+
+
             // ==============================================
+// STEP 1.12 - HELPFUL INGREDIENTS
+// ==============================================
 
-            const conflicts = [];
+if (
+    Array.isArray(recommendation.ingredients) &&
+    recommendation.ingredients.length > 0
+) {
+    recommendation.ingredients.forEach((ingredient) => {
 
+        if (
+            ingredient &&
+            !helpfulIngredients.some(
+                (item) =>
+                    item.toLowerCase().trim() ===
+                    ingredient.toLowerCase().trim()
+            )
+        ) {
+            helpfulIngredients.push(ingredient);
+        }
+    });
+}
 
-            if (
-                Array.isArray(
-                    ingredientWarnings
-                ) &&
-                ingredientWarnings.length > 0
-            ) {
-
-
-                ingredientWarnings.forEach(
-                    warning => {
-
-                        if (
-                            containsValue(
-                                recommendation
-                                    .ingredientWarnings,
-                                warning
-                            )
-                        ) {
-
-                            conflicts.push(
-                                warning
-                            );
-                        }
-                    }
-                );
-
-
-                // ==========================================
-                // SAFETY RULE
-                //
-                // Any selected sensitivity conflict
-                // completely removes the product.
-                // ==========================================
-
-                if (conflicts.length > 0) {
-
-                    console.log(
-                        `Excluded ${recommendation.productId} because of:`,
-                        conflicts
-                    );
-
-                    continue;
-                }
-
-
-                // No conflict
-
-                score += 25;
-
-                reasons.push(
-                    "No conflict with your selected ingredient preferences"
-                );
-
-            } else {
-
-
-                // Customer did not select sensitivities
-
-                score += 25;
-
-                reasons.push(
-                    "No ingredient sensitivities selected"
-                );
-            }
-
-
-            // ==============================================
-            // HELPFUL INGREDIENTS
-            // ==============================================
-
-            if (
-                Array.isArray(
-                    recommendation.ingredients
-                ) &&
-                recommendation.ingredients.length > 0
-            ) {
-
-                helpfulIngredients.push(
-                    ...recommendation.ingredients
-                );
-            }
+console.log(
+    `${product.name} helpful ingredients:`,
+    helpfulIngredients.length > 0
+        ? helpfulIngredients
+        : "None listed"
+);
 
 
             // ==============================================
@@ -644,43 +690,103 @@ if (selectedConcerns.length > 0) {
             // ONLY SHOW PRODUCTS WITH 35% OR MORE
             // ==============================================
 
-            if (
-                matchPercentage >= 35
-            ) {
+            if (matchPercentage >= 35) {
 
-                results.push({
+    let matchLevel = "";
 
-                    product,
+    if (matchPercentage >= 85) {
+        matchLevel = "Excellent Match";
+    } else if (matchPercentage >= 70) {
+        matchLevel = "Great Match";
+    } else if (matchPercentage >= 50) {
+        matchLevel = "Good Match";
+    } else {
+        matchLevel = "Possible Match";
+    }
 
-                    matchPercentage,
+    const explanation =
+        reasons.length > 0
+            ? reasons.join(". ") + "."
+            : "This product matches your selected beauty preferences.";
 
-                    reasons,
+    results.push({
+        product,
+        matchPercentage,
+        matchLevel,
+        explanation,
+        reasons,
+        matchedConcerns,
+        helpfulIngredients
+    });
 
-                    matchedConcerns,
+} else {
 
-                    helpfulIngredients
-                });
-            }
+    excludedReasons.lowMatch++;
+
+    console.log(
+        `Excluded ${product.name} because match percentage is only ${matchPercentage}%`
+    );
+}
         }
+        // ==============================================
+// STEP 1.9 - RANK RECOMMENDATIONS
+// Highest match percentage comes first
+// ==============================================
 
+results.sort((a, b) => {
+    return b.matchPercentage - a.matchPercentage;
+});
 
-        // ==================================================
-        // SORT STRONGEST MATCH FIRST
-        // ==================================================
+console.log(
+    "Ranked recommendations:",
+    results.map(item => ({
+        product: item.product.name,
+        match: `${item.matchPercentage}%`,
+        level: item.matchLevel,
+        explanation: item.explanation,
+        helpfulIngredients: item.helpfulIngredients
+    }))
+);
 
-        results.sort(
-            (a, b) =>
-                b.matchPercentage -
-                a.matchPercentage
-        );
+// ======================================
+// STEP 1.13 - HANDLE NO MATCH RESULTS
+// ======================================
 
+if (results.length === 0) {
+
+    let noMatchMessage =
+        "We couldn't find a suitable product for your current preferences.";
+
+    if (excludedReasons.sensitivity > 0) {
+
+        noMatchMessage =
+            "We couldn't find a safe match. Some products were removed because they conflict with your selected ingredient sensitivities.";
+
+    } else if (excludedReasons.lowMatch > 0) {
+
+        noMatchMessage =
+            "We couldn't find a strong enough match for your current skin needs and preferences.";
+
+    }
+
+    return res.json({
+        recommendations: [],
+        noMatch: true,
+        message: noMatchMessage,
+        excludedReasons
+    });
+}
 
         // ==================================================
         // RETURN RECOMMENDATIONS
         // ==================================================
 
-        res.json(results);
-
+        return res.json({
+    recommendations: results,
+    noMatch: false,
+    message: `GlowGuide found ${results.length} suitable product${results.length === 1 ? "" : "s"} for you.`,
+    totalMatches: results.length
+});
 
     } catch (err) {
 
