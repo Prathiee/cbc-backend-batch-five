@@ -962,3 +962,543 @@ export async function chatWithGlowGuide(
         });
     }
 }
+
+// ==========================================================
+// BUILD PERSONALIZED SKINCARE ROUTINE
+// ==========================================================
+
+export async function buildSkincareRoutine(req, res) {
+
+    try {
+
+        // --------------------------------------------------
+        // CHECK LOGIN
+        // --------------------------------------------------
+
+        if (!req.user) {
+            return res.status(401).json({
+                message:
+                    "Please log in to build your personalized skincare routine."
+            });
+        }
+
+        // --------------------------------------------------
+        // GET USER
+        // --------------------------------------------------
+
+        const User = (await import("../models/user.js")).default;
+
+        const user = await User.findOne({
+            email: req.user.email
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found."
+            });
+        }
+
+        const beautyProfile = user.beautyProfile;
+
+        // --------------------------------------------------
+        // CHECK BEAUTY QUIZ
+        // --------------------------------------------------
+
+        if (
+            !beautyProfile ||
+            beautyProfile.completed !== true
+        ) {
+            return res.status(400).json({
+                message:
+                    "Please complete the GlowGuide Beauty Quiz first."
+            });
+        }
+
+        const {
+            skinType,
+            skinConcerns = [],
+            budget,
+            sensitivities = []
+        } = beautyProfile;
+
+        console.log(
+            "Building routine for:",
+            {
+                skinType,
+                skinConcerns,
+                budget,
+                sensitivities
+            }
+        );
+
+        // --------------------------------------------------
+        // GET RECOMMENDATION RECORDS
+        // --------------------------------------------------
+
+        const recommendationRecords =
+            await RecommendationData.find({});
+
+        const suitableProducts = [];
+
+        // --------------------------------------------------
+        // CHECK PRODUCTS
+        // --------------------------------------------------
+
+        for (const recommendation of recommendationRecords) {
+
+            const product = await Product.findOne({
+                productId: recommendation.productId
+            });
+
+            if (!product) {
+                continue;
+            }
+
+            if (product.isAvailable === false) {
+                continue;
+            }
+
+            // Routine currently uses skincare only
+            if (product.category !== "Skin Care") {
+                continue;
+            }
+
+            // --------------------------------------------------
+            // INGREDIENT SAFETY
+            // --------------------------------------------------
+
+            const productWarnings =
+                Array.isArray(
+                    recommendation.ingredientWarnings
+                )
+                    ? recommendation.ingredientWarnings
+                    : [];
+
+            const hasConflict =
+                sensitivities.some(
+                    sensitivity =>
+                        productWarnings.some(
+                            warning =>
+                                normalize(warning) ===
+                                normalize(sensitivity)
+                        )
+                );
+
+            if (hasConflict) {
+
+                console.log(
+                    `Routine excluded ${product.name} because of sensitivity conflict.`
+                );
+
+                continue;
+            }
+
+            // --------------------------------------------------
+            // CALCULATE MATCH SCORE
+            // --------------------------------------------------
+
+            let score = 0;
+            const reasons = [];
+
+            // SKIN TYPE - 30
+            if (
+                containsValue(
+                    recommendation.skinTypes,
+                    skinType
+                )
+            ) {
+
+                score += 30;
+
+                reasons.push(
+                    `Suitable for ${skinType} skin`
+                );
+            }
+
+            // SKIN CONCERNS - 30
+            const matchedConcerns =
+                findMatches(
+                    recommendation.skinConcerns,
+                    skinConcerns
+                );
+
+            if (skinConcerns.length > 0) {
+
+                const concernScore =
+                    (
+                        matchedConcerns.length /
+                        skinConcerns.length
+                    ) * 30;
+
+                score += concernScore;
+
+                if (matchedConcerns.length > 0) {
+
+                    reasons.push(
+                        `Supports ${matchedConcerns.join(", ")}`
+                    );
+                }
+            }
+
+            // --------------------------------------------------
+            // BUDGET - 15
+            // --------------------------------------------------
+
+            const productPrice =
+                Number(product.price);
+
+            const normalizedBudget =
+                normalize(budget);
+
+            let budgetScore = 0;
+
+            if (normalizedBudget === "low") {
+
+                if (productPrice <= 1000) {
+                    budgetScore = 15;
+                } else if (productPrice <= 1500) {
+                    budgetScore = 10;
+                } else if (productPrice <= 2000) {
+                    budgetScore = 5;
+                }
+
+            } else if (
+                normalizedBudget === "medium"
+            ) {
+
+                if (
+                    productPrice > 1000 &&
+                    productPrice <= 2000
+                ) {
+                    budgetScore = 15;
+
+                } else if (
+                    productPrice > 2000 &&
+                    productPrice <= 3500
+                ) {
+                    budgetScore = 10;
+
+                } else if (
+                    productPrice <= 1000
+                ) {
+                    budgetScore = 8;
+                }
+
+            } else if (
+                normalizedBudget === "high"
+            ) {
+
+                if (productPrice >= 2000) {
+                    budgetScore = 15;
+
+                } else if (
+                    productPrice >= 1500
+                ) {
+                    budgetScore = 10;
+
+                } else {
+                    budgetScore = 5;
+                }
+            }
+
+            score += budgetScore;
+
+            // --------------------------------------------------
+            // INGREDIENT SAFETY - 25
+            // --------------------------------------------------
+
+            if (sensitivities.length > 0) {
+
+                score += 25;
+
+                reasons.push(
+                    "No conflict with your saved sensitivities"
+                );
+            }
+
+            const matchPercentage =
+                Math.max(
+                    0,
+                    Math.min(
+                        100,
+                        Math.round(score)
+                    )
+                );
+
+            // --------------------------------------------------
+// GET ROUTINE STEP SAVED BY ADMIN
+// --------------------------------------------------
+
+const savedRoutineStep =
+    normalize(recommendation.routineStep);
+
+let routineType = "";
+
+if (savedRoutineStep === "cleanser") {
+
+    routineType = "cleanser";
+
+} else if (savedRoutineStep === "toner") {
+
+    routineType = "toner";
+
+} else if (savedRoutineStep === "serum") {
+
+    routineType = "treatment";
+
+} else if (savedRoutineStep === "moisturizer") {
+
+    routineType = "moisturizer";
+
+} else if (savedRoutineStep === "sunscreen") {
+
+    routineType = "sunscreen";
+}
+
+// Product has not been assigned to a routine step
+if (!routineType) {
+
+    console.log(
+        `Routine skipped ${product.name} because no routine step is configured.`
+    );
+
+    continue;
+}
+
+            if (matchPercentage >= 35) {
+
+                suitableProducts.push({
+
+                    product,
+
+                    routineType,
+
+                    matchPercentage,
+
+                    reasons
+                });
+            }
+        }
+
+        // --------------------------------------------------
+        // SORT BEST MATCH FIRST
+        // --------------------------------------------------
+
+        suitableProducts.sort(
+            (a, b) =>
+                b.matchPercentage -
+                a.matchPercentage
+        );
+
+        // --------------------------------------------------
+        // GET BEST PRODUCT FOR EACH ROUTINE STEP
+        // --------------------------------------------------
+
+        function bestProduct(type) {
+
+            return suitableProducts.find(
+                item =>
+                    item.routineType === type
+            );
+        }
+
+        const cleanser =
+            bestProduct("cleanser");
+
+        const toner =
+            bestProduct("toner");
+
+        const treatment =
+            bestProduct("treatment");
+
+        const moisturizer =
+            bestProduct("moisturizer");
+
+        const sunscreen =
+            bestProduct("sunscreen");
+
+        // --------------------------------------------------
+        // FORMAT PRODUCT
+        // --------------------------------------------------
+
+        function formatRoutineProduct(item) {
+
+            if (!item) {
+                return null;
+            }
+
+            return {
+
+                productId:
+                    item.product.productId,
+
+                name:
+                    item.product.name,
+
+                price:
+                    item.product.price,
+
+                image:
+                    Array.isArray(
+                        item.product.images
+                    )
+                        ? item.product.images[0]
+                        : null,
+
+                matchPercentage:
+                    item.matchPercentage,
+
+                reasons:
+                    item.reasons
+            };
+        }
+
+        // --------------------------------------------------
+        // MORNING ROUTINE
+        // --------------------------------------------------
+
+        const morning = [];
+
+        if (cleanser) {
+            morning.push({
+                step: 1,
+                type: "Cleanser",
+                instruction:
+                    "Gently cleanse your face.",
+                product:
+                    formatRoutineProduct(cleanser)
+            });
+        }
+
+        if (toner) {
+            morning.push({
+                step: morning.length + 1,
+                type: "Toner",
+                instruction:
+                    "Apply toner after cleansing.",
+                product:
+                    formatRoutineProduct(toner)
+            });
+        }
+
+        if (treatment) {
+            morning.push({
+                step: morning.length + 1,
+                type: "Treatment",
+                instruction:
+                    "Apply a suitable treatment or serum.",
+                product:
+                    formatRoutineProduct(treatment)
+            });
+        }
+
+        if (moisturizer) {
+            morning.push({
+                step: morning.length + 1,
+                type: "Moisturizer",
+                instruction:
+                    "Apply moisturizer to hydrate your skin.",
+                product:
+                    formatRoutineProduct(moisturizer)
+            });
+        }
+
+        if (sunscreen) {
+            morning.push({
+                step: morning.length + 1,
+                type: "Sunscreen",
+                instruction:
+                    "Finish your morning routine with sunscreen.",
+                product:
+                    formatRoutineProduct(sunscreen)
+            });
+        }
+
+        // --------------------------------------------------
+        // NIGHT ROUTINE
+        // --------------------------------------------------
+
+        const night = [];
+
+        if (cleanser) {
+            night.push({
+                step: 1,
+                type: "Cleanser",
+                instruction:
+                    "Cleanse your face before your night routine.",
+                product:
+                    formatRoutineProduct(cleanser)
+            });
+        }
+
+        if (toner) {
+            night.push({
+                step: night.length + 1,
+                type: "Toner",
+                instruction:
+                    "Apply toner after cleansing.",
+                product:
+                    formatRoutineProduct(toner)
+            });
+        }
+
+        if (treatment) {
+            night.push({
+                step: night.length + 1,
+                type: "Treatment",
+                instruction:
+                    "Apply your treatment or serum.",
+                product:
+                    formatRoutineProduct(treatment)
+            });
+        }
+
+        if (moisturizer) {
+            night.push({
+                step: night.length + 1,
+                type: "Moisturizer",
+                instruction:
+                    "Finish with moisturizer.",
+                product:
+                    formatRoutineProduct(moisturizer)
+            });
+        }
+
+        // --------------------------------------------------
+        // RETURN ROUTINE
+        // --------------------------------------------------
+
+        return res.status(200).json({
+
+            message:
+                "GlowGuide created your personalized skincare routine.",
+
+            beautyProfile: {
+                skinType,
+                skinConcerns,
+                budget,
+                sensitivities
+            },
+
+            morning,
+
+            night
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Build skincare routine error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            message:
+                "Failed to build skincare routine.",
+
+            error:
+                error.message
+        });
+    }
+}

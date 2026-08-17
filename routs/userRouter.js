@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, getUser, googleLogin, loginUser, resetPassword, sendOTP, getAllUsers, getUserById, updateUser, deleteUser } from "../controllers/userController.js";
+import { createUser, getUser, googleLogin, loginUser, resetPassword, sendOTP, getAllUsers, getUserById, updateUser, deleteUser, saveBeautyProfile } from "../controllers/userController.js";
 
 const userRouter = express.Router();
 
@@ -17,6 +17,11 @@ userRouter.get("/", getUser)
 // Get all users
 userRouter.get("/all", getAllUsers);
 
+userRouter.put(
+    "/beauty-profile",
+    saveBeautyProfile
+);
+
 // Get one user
 userRouter.get("/:userId", getUserById);
 
@@ -25,6 +30,7 @@ userRouter.put("/:userId", updateUser);
 
 // Delete user
 userRouter.delete("/:userId", deleteUser);
+
 
 
 export default userRouter;

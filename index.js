@@ -9,6 +9,7 @@ import recommendationRouter from "./routs/recommendationRouter.js";
 import reviewRouter from "./routs/reviewRouter.js";
 import contactRouter from "./routs/contactRouter.js";
 import chatbotRouter from "./routs/chatbotRouter.js";
+import ingredientRouter from "./routs/ingredientRouter.js";
 import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -27,9 +28,13 @@ app.use((req,res,next)=>{
            jwt.verify(token, process.env.JWT_KEY ,
             (err,decoded)=>{
                 if(decoded != null){
-                   req.user = decoded
-                   next()
-                }else{
+
+    console.log("Decoded JWT user:", decoded);
+
+    req.user = decoded;
+    next();
+
+}else{
                     console.log("Invalid Token")
                     res.status(403).json({
                         message : "Invalid Token"
@@ -59,6 +64,7 @@ app.use("/recommendation", recommendationRouter);
 app.use("/reviews", reviewRouter);
 app.use("/contacts", contactRouter);
 app.use("/chatbot", chatbotRouter);
+app.use("/ingredients", ingredientRouter);
 
 //mongodb+srv://Admin:123@cluster0.sijs1es.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 app.listen(3000, () => {

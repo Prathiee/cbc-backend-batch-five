@@ -26,7 +26,23 @@ const recommendationDataSchema = mongoose.Schema({
 
     ingredientWarnings: [{
         type: String
-    }]
+    }],
+
+    // ==========================================
+    // SKINCARE ROUTINE STEP
+    // ==========================================
+    routineStep: {
+        type: String,
+        enum: [
+            "Cleanser",
+            "Toner",
+            "Serum",
+            "Moisturizer",
+            "Sunscreen"
+        ],
+        default: null
+    }
+
 });
 
 const RecommendationData = mongoose.model(

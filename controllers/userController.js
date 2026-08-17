@@ -560,3 +560,141 @@ export async function deleteUser(req, res) {
         });
     }
 }
+
+export async function saveBeautyProfile(req, res) {
+
+    try {
+
+        // ==========================================
+        // CHECK LOGIN
+        // ==========================================
+
+        if (!req.user || !req.user.userId) {
+
+            return res.status(403).json({
+                message: "Please login to save your beauty profile"
+            });
+
+        }
+
+
+        // ==========================================
+        // GET LOGGED-IN USER ID
+        // ==========================================
+
+        const userId = req.user.userId;
+
+        console.log(
+            "Saving beauty profile for user:",
+            userId
+        );
+
+
+        // ==========================================
+        // GET QUIZ DATA
+        // ==========================================
+
+        const {
+            skinType,
+            skinConcerns,
+            budget,
+            sensitivities
+        } = req.body;
+
+
+        console.log("Received beauty profile data:", {
+            skinType,
+            skinConcerns,
+            budget,
+            sensitivities
+        });
+
+
+        // ==========================================
+        // FIND CUSTOMER
+        // ==========================================
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+
+            return res.status(404).json({
+                message: "User not found"
+            });
+
+        }
+
+
+        // ==========================================
+        // SAVE BEAUTY PROFILE
+        // ==========================================
+
+        user.beautyProfile = {
+
+            skinType: skinType || "",
+
+            skinConcerns:
+                Array.isArray(skinConcerns)
+                    ? skinConcerns
+                    : [],
+
+            budget: budget || "",
+
+            sensitivities:
+                Array.isArray(sensitivities)
+                    ? sensitivities
+                    : [],
+
+            completed: true,
+
+            updatedAt: new Date()
+
+        };
+
+
+        await user.save();
+
+
+        // ==========================================
+        // SUCCESS LOG
+        // ==========================================
+
+        console.log(
+            "Beauty profile saved successfully:",
+            user.beautyProfile
+        );
+
+
+        // ==========================================
+        // RESPONSE
+        // ==========================================
+
+        return res.status(200).json({
+
+            message:
+                "Beauty profile saved successfully",
+
+            beautyProfile:
+                user.beautyProfile
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Save beauty profile error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            message:
+                "Failed to save beauty profile"
+
+        });
+
+    }
+
+}
