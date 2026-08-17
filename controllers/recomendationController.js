@@ -416,115 +416,128 @@ if (selectedConcerns.length > 0) {
     );
 }
             // ==============================================
-            // 3. SMART ACTUAL-PRICE BUDGET MATCHING
-            // MAXIMUM = 15 POINTS
-            // ==============================================
+// 3. SMART BUDGET PREFERENCE MATCHING
+// MAXIMUM = 15 POINTS
+// ==============================================
 
-            const maxBudgetPrice =
-                getMaximumBudget(budget);
+const normalizedBudget = normalize(budget);
+const productPrice = Number(product.price);
 
+let budgetScore = 0;
 
-            console.log(
-                `Budget check: ${product.name} | Price: Rs.${product.price} | Customer budget: ${budget} | Max: ${maxBudgetPrice}`
-            );
-
-
-            if (maxBudgetPrice !== null) {
-
-
-                // ==========================================
-                // HIGH BUDGET
-                // ==========================================
-                //
-                // High has no maximum price.
-                //
-
-                if (
-                    maxBudgetPrice === Infinity
-                ) {
-
-                    score += 15;
-
-                    reasons.push(
-                        `Fits your ${budget} budget`
-                    );
-                }
+console.log(
+    `Budget check: ${product.name} | ` +
+    `Price: Rs.${productPrice} | ` +
+    `Customer budget: ${budget}`
+);
 
 
-                // ==========================================
-                // PRODUCT IS WITHIN CUSTOMER'S BUDGET
-                // ==========================================
+// ==============================================
+// LOW BUDGET
+// Prefer cheaper products
+// ==============================================
 
-                else if (
-                    product.price <=
-                    maxBudgetPrice
-                ) {
+if (normalizedBudget === "low") {
 
-                    score += 15;
+    if (productPrice <= 1000) {
 
-                    reasons.push(
-                        `Fits your ${budget} budget (Rs. ${product.price})`
-                    );
-                }
+        budgetScore = 15;
 
+    } else if (productPrice <= 1500) {
 
-                // ==========================================
-                // PRODUCT IS ABOVE CUSTOMER'S BUDGET
-                // ==========================================
+        budgetScore = 10;
 
-                else {
+    } else if (productPrice <= 2000) {
 
-                    const amountOverBudget =
-                        product.price -
-                        maxBudgetPrice;
+        budgetScore = 5;
 
+    } else {
 
-                    const percentageOverBudget =
-                        (
-                            amountOverBudget /
-                            maxBudgetPrice
-                        ) * 100;
+        budgetScore = 0;
+    }
+
+}
 
 
-                    // ======================================
-                    // SLIGHTLY ABOVE BUDGET
-                    // Up to 25% above maximum
-                    // ======================================
+// ==============================================
+// MEDIUM BUDGET
+// Prefer middle-priced products
+// ==============================================
 
-                    if (
-                        percentageOverBudget <= 25
-                    ) {
+else if (normalizedBudget === "medium") {
 
-                        reasons.push(
-                            `Slightly above your ${budget} budget (Rs. ${product.price})`
-                        );
+    if (
+        productPrice > 1000 &&
+        productPrice <= 2000
+    ) {
 
-                        console.log(
-                            `${product.name} is slightly above budget by ${percentageOverBudget.toFixed(1)}%`
-                        );
-                    }
+        budgetScore = 15;
+
+    } else if (
+        productPrice > 2000 &&
+        productPrice <= 3500
+    ) {
+
+        budgetScore = 10;
+
+    } else if (productPrice <= 1000) {
+
+        budgetScore = 8;
+
+    } else {
+
+        budgetScore = 0;
+    }
+
+}
 
 
-                    // ======================================
-                    // FAR ABOVE BUDGET
-                    // Deduct 15 points
-                    // ======================================
+// ==============================================
+// HIGH BUDGET
+// Prefer higher-priced products
+// ==============================================
 
-                    else {
+else if (normalizedBudget === "high") {
 
-                        score -= 15;
+    if (productPrice >= 2000) {
 
-                        reasons.push(
-                            `Above your selected ${budget} budget (Rs. ${product.price})`
-                        );
+        budgetScore = 15;
 
-                        console.log(
-                            `${product.name} is far above budget by ${percentageOverBudget.toFixed(1)}%`
-                        );
-                    }
-                }
-            }
+    } else if (productPrice >= 1500) {
 
+        budgetScore = 10;
+
+    } else {
+
+        budgetScore = 5;
+    }
+
+}
+
+
+// ==============================================
+// ADD BUDGET SCORE
+// ==============================================
+
+score += budgetScore;
+
+
+// ==============================================
+// ADD EXPLANATION
+// ==============================================
+
+if (normalizedBudget) {
+
+    reasons.push(
+        `Matches your ${budget} budget preference`
+    );
+}
+
+
+console.log(
+    `${product.name} budget preference score: ` +
+    `${budgetScore}/15`
+);
 
             // ==============================================
 // 4. SMART INGREDIENT SAFETY
@@ -730,24 +743,70 @@ console.log(
         }
         // ==============================================
 // STEP 1.9 - RANK RECOMMENDATIONS
-// Highest match percentage comes first
 // ==============================================
 
 results.sort((a, b) => {
-    return b.matchPercentage - a.matchPercentage;
+
+    // ------------------------------------------
+    // FIRST: Highest recommendation match
+    // ------------------------------------------
+
+    if (b.matchPercentage !== a.matchPercentage) {
+
+        return (
+            b.matchPercentage -
+            a.matchPercentage
+        );
+    }
+
+
+    // ------------------------------------------
+    // SECOND: Use budget preference
+    // when match percentages are equal
+    // ------------------------------------------
+
+    const normalizedBudget =
+        normalize(budget);
+
+    const priceA =
+        Number(a.product.price);
+
+    const priceB =
+        Number(b.product.price);
+
+
+    // LOW → cheaper product first
+
+    if (normalizedBudget === "low") {
+
+        return priceA - priceB;
+    }
+
+
+    // HIGH → higher-priced product first
+
+    if (normalizedBudget === "high") {
+
+        return priceB - priceA;
+    }
+
+
+    // MEDIUM → product closest to
+    // middle budget target first
+
+    if (normalizedBudget === "medium") {
+
+        const mediumTarget = 1750;
+
+        return (
+            Math.abs(priceA - mediumTarget) -
+            Math.abs(priceB - mediumTarget)
+        );
+    }
+
+
+    return 0;
 });
-
-console.log(
-    "Ranked recommendations:",
-    results.map(item => ({
-        product: item.product.name,
-        match: `${item.matchPercentage}%`,
-        level: item.matchLevel,
-        explanation: item.explanation,
-        helpfulIngredients: item.helpfulIngredients
-    }))
-);
-
 // ======================================
 // STEP 1.13 - HANDLE NO MATCH RESULTS
 // ======================================
