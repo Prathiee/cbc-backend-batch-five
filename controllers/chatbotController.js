@@ -2,6 +2,7 @@ import Product from "../models/product.js";
 import User from "../models/user.js";
 import beautyKnowledge from "../data/beautyKnowledge.js";
 import RecommendationData from "../models/recommendationData.js";
+import axios from "axios";
 
 export async function sendChatMessage(req, res) {
 
@@ -980,6 +981,631 @@ export async function sendChatMessage(req, res) {
 
         }
 
+        // ==================================================
+// 6.5 PERSONALIZED SKINCARE ROUTINE
+// ==================================================
+
+const skincareRoutinePatterns = [
+    "create a skincare routine for me",
+    "create skincare routine for me",
+    "create my skincare routine",
+    "make a skincare routine for me",
+    "make me a skincare routine",
+    "give me a skincare routine",
+    "what skincare routine should i use",
+    "what skin care routine should i use",
+    "skincare routine for me",
+    "skin care routine for me",
+    "my skincare routine",
+    "my skin care routine"
+];
+
+const askingForSkincareRoutine =
+    skincareRoutinePatterns.some(
+        (pattern) =>
+            userMessage.includes(pattern)
+    );
+
+if (askingForSkincareRoutine) {
+
+    console.log(
+        "GlowGuide detected personalized skincare routine request"
+    );
+
+    // ------------------------------------------
+    // USER MUST BE LOGGED IN
+    // ------------------------------------------
+
+    if (!req.user) {
+
+        return res.status(200).json({
+            reply:
+                "🌸 Please log in first so I can use your saved Beauty Profile to create a personalized skincare routine."
+        });
+    }
+
+    // ------------------------------------------
+    // BEAUTY QUIZ MUST BE COMPLETED
+    // ------------------------------------------
+
+    if (
+        !beautyProfile ||
+        beautyProfile.completed !== true
+    ) {
+
+        return res.status(200).json({
+            reply:
+                "🌸 I don't have a completed Beauty Profile for you yet.\n\n" +
+                "Please complete the GlowGuide Beauty Quiz first. Then I can create a skincare routine based on your skin type, concerns and ingredient sensitivities."
+        });
+    }
+
+    // ------------------------------------------
+// GET SAFE SKINCARE PRODUCTS
+// ------------------------------------------
+
+const routineProducts = products.filter((product) => {
+
+    // Only available Skin Care products
+    if (
+        !product.category ||
+        product.category.toLowerCase().trim() !== "skin care"
+    ) {
+        return false;
+    }
+
+    if (
+        product.isAvailable === false ||
+        Number(product.stock) <= 0
+    ) {
+        return false;
+    }
+
+    return true;
+});
+
+console.log(
+    `GlowGuide found ${routineProducts.length} available skincare products for routine`
+);
+
+console.log("GlowGuide routine products:");
+
+routineProducts.forEach((product) => {
+    console.log({
+        productId: product.productId,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        stock: product.stock
+    });
+});
+
+// ------------------------------------------
+// IDENTIFY PRODUCTS FOR ROUTINE STEPS
+// ------------------------------------------
+
+const routineCleanser = routineProducts.find((product) => {
+
+    const name = product.name.toLowerCase();
+
+    return (
+        name.includes("cleanser") ||
+        name.includes("face wash") ||
+        name.includes("facewash")
+    );
+});
+
+
+const routineSerum = routineProducts.find((product) => {
+
+    const name = product.name.toLowerCase();
+
+    return (
+        name.includes("serum")
+    );
+});
+
+
+const routineMoisturizer = routineProducts.find((product) => {
+
+    const name = product.name.toLowerCase();
+
+    return (
+        name.includes("moisturizer") ||
+        name.includes("moisturiser") ||
+        name.includes("face cream")
+    );
+});
+
+
+const routineSunscreen = routineProducts.find((product) => {
+
+    const name = product.name.toLowerCase();
+
+    return (
+        name.includes("sunscreen") ||
+        name.includes("sun screen") ||
+        name.includes("spf")
+    );
+});
+
+
+console.log("GlowGuide routine product matches:");
+
+console.log(
+    "Cleanser:",
+    routineCleanser
+        ? routineCleanser.name
+        : "No matching product"
+);
+
+console.log(
+    "Serum:",
+    routineSerum
+        ? routineSerum.name
+        : "No matching product"
+);
+
+console.log(
+    "Moisturizer:",
+    routineMoisturizer
+        ? routineMoisturizer.name
+        : "No matching product"
+);
+
+console.log(
+    "Sunscreen:",
+    routineSunscreen
+        ? routineSunscreen.name
+        : "No matching product"
+);
+
+// ------------------------------------------
+// LOAD ROUTINE RECOMMENDATION DATA
+// ------------------------------------------
+
+const routineRecommendationRecords =
+    await RecommendationData.find({});
+
+console.log(
+    `GlowGuide loaded ${routineRecommendationRecords.length} recommendation records for routine`
+);
+
+
+// ------------------------------------------
+// FIND RECOMMENDATION DATA FOR A PRODUCT
+// ------------------------------------------
+
+function getRoutineRecommendation(product) {
+
+    if (!product) {
+        return null;
+    }
+
+    return routineRecommendationRecords.find(
+        (record) =>
+            String(record.productId)
+                .toLowerCase()
+                .trim() ===
+            String(product.productId)
+                .toLowerCase()
+                .trim()
+    );
+}
+
+
+const cleanserRecommendation =
+    getRoutineRecommendation(routineCleanser);
+
+const serumRecommendation =
+    getRoutineRecommendation(routineSerum);
+
+const moisturizerRecommendation =
+    getRoutineRecommendation(routineMoisturizer);
+
+const sunscreenRecommendation =
+    getRoutineRecommendation(routineSunscreen);
+
+
+console.log("GlowGuide routine recommendation data:");
+
+console.log(
+    "Cleanser:",
+    cleanserRecommendation
+        ? "Recommendation data found"
+        : "No recommendation data"
+);
+
+console.log(
+    "Serum:",
+    serumRecommendation
+        ? "Recommendation data found"
+        : "No recommendation data"
+);
+
+console.log(
+    "Moisturizer:",
+    moisturizerRecommendation
+        ? "Recommendation data found"
+        : "No recommendation data"
+);
+
+console.log(
+    "Sunscreen:",
+    sunscreenRecommendation
+        ? "Recommendation data found"
+        : "No recommendation data"
+);
+
+    // ------------------------------------------
+    // GET SAVED PROFILE
+    // ------------------------------------------
+
+    const routineSkinType =
+        beautyProfile.skinType || "Not selected";
+
+    const routineConcerns =
+        Array.isArray(beautyProfile.skinConcerns)
+            ? beautyProfile.skinConcerns
+            : [];
+
+    const routineSensitivities =
+        Array.isArray(beautyProfile.sensitivities)
+            ? beautyProfile.sensitivities
+            : [];
+
+    // ------------------------------------------
+    // BASIC MORNING ROUTINE
+    // ------------------------------------------
+
+    let morningRoutine = [
+        "1. Gentle cleanser",
+        "2. Moisturizer",
+        "3. Sunscreen"
+    ];
+
+    // ------------------------------------------
+    // BASIC NIGHT ROUTINE
+    // ------------------------------------------
+
+    let nightRoutine = [
+        "1. Gentle cleanser",
+        "2. Moisturizer"
+    ];
+
+    // ------------------------------------------
+    // PERSONALIZE FOR DRY SKIN
+    // ------------------------------------------
+
+    if (
+        routineSkinType.toLowerCase() === "dry"
+    ) {
+
+        morningRoutine = [
+            "1. Gentle cleanser",
+            "2. Hydrating ingredient such as Hyaluronic Acid",
+            "3. Moisturizer",
+            "4. Sunscreen"
+        ];
+
+        nightRoutine = [
+            "1. Gentle cleanser",
+            "2. Hydrating ingredient such as Hyaluronic Acid",
+            "3. Moisturizer or barrier-supporting cream"
+        ];
+    }
+
+    // ------------------------------------------
+    // PERSONALIZE FOR OILY SKIN
+    // ------------------------------------------
+
+    else if (
+        routineSkinType.toLowerCase() === "oily"
+    ) {
+
+        morningRoutine = [
+            "1. Gentle cleanser",
+            "2. Niacinamide",
+            "3. Lightweight moisturizer",
+            "4. Sunscreen"
+        ];
+
+        nightRoutine = [
+            "1. Gentle cleanser",
+            "2. Niacinamide",
+            "3. Lightweight moisturizer"
+        ];
+    }
+
+    // ------------------------------------------
+    // PERSONALIZE FOR COMBINATION SKIN
+    // ------------------------------------------
+
+    else if (
+        routineSkinType.toLowerCase() === "combination"
+    ) {
+
+        morningRoutine = [
+            "1. Gentle cleanser",
+            "2. Niacinamide or a hydrating serum",
+            "3. Lightweight moisturizer",
+            "4. Sunscreen"
+        ];
+
+        nightRoutine = [
+            "1. Gentle cleanser",
+            "2. Hydrating serum",
+            "3. Lightweight moisturizer"
+        ];
+    }
+
+    // ------------------------------------------
+    // PERSONALIZE FOR SENSITIVE SKIN
+    // ------------------------------------------
+
+    else if (
+        routineSkinType.toLowerCase() === "sensitive"
+    ) {
+
+        morningRoutine = [
+            "1. Gentle cleanser",
+            "2. Gentle hydrating product",
+            "3. Moisturizer",
+            "4. Sunscreen"
+        ];
+
+        nightRoutine = [
+            "1. Gentle cleanser",
+            "2. Gentle hydrating product",
+            "3. Moisturizer"
+        ];
+    }
+
+    // ------------------------------------------
+    // PERSONALIZE FOR NORMAL SKIN
+    // ------------------------------------------
+
+    else if (
+        routineSkinType.toLowerCase() === "normal"
+    ) {
+
+        morningRoutine = [
+            "1. Gentle cleanser",
+            "2. Hydrating serum",
+            "3. Moisturizer",
+            "4. Sunscreen"
+        ];
+
+        nightRoutine = [
+            "1. Gentle cleanser",
+            "2. Hydrating serum",
+            "3. Moisturizer"
+        ];
+    }
+
+    // ------------------------------------------
+    // PROFILE TEXT
+    // ------------------------------------------
+
+    const routineConcernText =
+        routineConcerns.length > 0
+            ? routineConcerns.join(", ")
+            : "None selected";
+
+    const routineSensitivityText =
+        routineSensitivities.length > 0
+            ? routineSensitivities.join(", ")
+            : "None selected";
+
+      // ------------------------------------------
+// CHECK PRODUCT SUITABILITY FOR PROFILE
+// ------------------------------------------
+
+function isRoutineProductSuitable(product, recommendation) {
+
+    // Product or recommendation data missing
+    if (!product || !recommendation) {
+        return false;
+    }
+
+    const profileSkinType =
+        String(routineSkinType)
+            .toLowerCase()
+            .trim();
+
+    const profileConcerns =
+        routineConcerns.map(
+            (concern) =>
+                String(concern)
+                    .toLowerCase()
+                    .trim()
+        );
+
+    const profileSensitivities =
+        routineSensitivities.map(
+            (sensitivity) =>
+                String(sensitivity)
+                    .toLowerCase()
+                    .trim()
+        );
+
+
+    // ------------------------------------------
+    // CHECK SKIN TYPE
+    // ------------------------------------------
+
+    const supportedSkinTypes =
+        Array.isArray(recommendation.skinTypes)
+            ? recommendation.skinTypes.map(
+                (type) =>
+                    String(type)
+                        .toLowerCase()
+                        .trim()
+            )
+            : [];
+
+    const skinTypeMatch =
+        supportedSkinTypes.includes(
+            profileSkinType
+        );
+
+
+    // ------------------------------------------
+    // CHECK SKIN CONCERNS
+    // ------------------------------------------
+
+    const supportedConcerns =
+        Array.isArray(recommendation.skinConcerns)
+            ? recommendation.skinConcerns.map(
+                (concern) =>
+                    String(concern)
+                        .toLowerCase()
+                        .trim()
+            )
+            : [];
+
+    const concernMatch =
+        profileConcerns.length === 0 ||
+        profileConcerns.some(
+            (concern) =>
+                supportedConcerns.includes(concern)
+        );
+
+
+    // ------------------------------------------
+    // CHECK INGREDIENT SENSITIVITIES
+    // ------------------------------------------
+
+    const warnings =
+        Array.isArray(recommendation.ingredientWarnings)
+            ? recommendation.ingredientWarnings.map(
+                (warning) =>
+                    String(warning)
+                        .toLowerCase()
+                        .trim()
+            )
+            : [];
+
+    const hasSensitivityConflict =
+        profileSensitivities.some(
+            (sensitivity) =>
+                warnings.includes(sensitivity)
+        );
+
+
+    // ------------------------------------------
+    // FINAL RESULT
+    // ------------------------------------------
+
+    return (
+        skinTypeMatch &&
+        concernMatch &&
+        !hasSensitivityConflict
+    );
+}
+
+
+// ------------------------------------------
+// CHECK CURRENT ROUTINE PRODUCTS
+// ------------------------------------------
+
+const safeRoutineCleanser =
+    isRoutineProductSuitable(
+        routineCleanser,
+        cleanserRecommendation
+    )
+        ? routineCleanser
+        : null;
+
+
+const safeRoutineSerum =
+    isRoutineProductSuitable(
+        routineSerum,
+        serumRecommendation
+    )
+        ? routineSerum
+        : null;
+
+
+const safeRoutineMoisturizer =
+    isRoutineProductSuitable(
+        routineMoisturizer,
+        moisturizerRecommendation
+    )
+        ? routineMoisturizer
+        : null;
+
+
+const safeRoutineSunscreen =
+    isRoutineProductSuitable(
+        routineSunscreen,
+        sunscreenRecommendation
+    )
+        ? routineSunscreen
+        : null;
+
+
+// ------------------------------------------
+// TEST RESULTS
+// ------------------------------------------
+
+console.log(
+    "GlowGuide suitable routine products:"
+);
+
+console.log(
+    "Cleanser:",
+    safeRoutineCleanser
+        ? safeRoutineCleanser.name
+        : "No suitable product"
+);
+
+console.log(
+    "Serum:",
+    safeRoutineSerum
+        ? safeRoutineSerum.name
+        : "No suitable product"
+);
+
+console.log(
+    "Moisturizer:",
+    safeRoutineMoisturizer
+        ? safeRoutineMoisturizer.name
+        : "No suitable product"
+);
+
+console.log(
+    "Sunscreen:",
+    safeRoutineSunscreen
+        ? safeRoutineSunscreen.name
+        : "No suitable product"
+);      
+
+    // ------------------------------------------
+    // SEND ROUTINE
+    // ------------------------------------------
+
+    return res.status(200).json({
+
+        reply:
+            `🌸 Here is your personalized GlowGuide skincare routine.\n\n` +
+
+            `Your Beauty Profile:\n` +
+            `Skin Type: ${routineSkinType}\n` +
+            `Skin Concerns: ${routineConcernText}\n` +
+            `Ingredient Sensitivities: ${routineSensitivityText}\n\n` +
+
+            `☀️ MORNING ROUTINE\n\n` +
+            `${morningRoutine.join("\n")}\n\n` +
+
+            `🌙 NIGHT ROUTINE\n\n` +
+            `${nightRoutine.join("\n")}\n\n` +
+
+            `✨ This is general skincare guidance based on your saved Beauty Profile. Introduce new products carefully because individual skin can react differently.`
+
+    });
+}
+
 
         // ==================================================
         // 7. CATEGORY SEARCH
@@ -1209,6 +1835,327 @@ export async function sendChatMessage(req, res) {
             });
 
         }
+
+        // ==========================================================
+// 8.5 PERSONALIZED INGREDIENT RECOMMENDATION
+// FROM SAVED BEAUTY PROFILE
+// ==========================================================
+
+const ingredientRecommendationPatterns = [
+    "what ingredients are good for my skin",
+    "what ingredient is good for my skin",
+    "which ingredients are good for my skin",
+    "which ingredient is good for my skin",
+    "what ingredients should i use",
+    "which ingredients should i use",
+    "recommend ingredients for my skin",
+    "recommend an ingredient for my skin",
+    "suggest ingredients for my skin",
+    "suggest an ingredient for my skin",
+    "best ingredients for my skin"
+];
+
+const askingForIngredientRecommendation =
+    ingredientRecommendationPatterns.some(
+        (pattern) =>
+            userMessage.includes(pattern)
+    );
+
+
+if (askingForIngredientRecommendation) {
+
+    console.log(
+        "GlowGuide detected personalized ingredient recommendation request"
+    );
+
+
+    // --------------------------------------------------
+    // USER MUST BE LOGGED IN
+    // --------------------------------------------------
+
+    if (!req.user) {
+
+        return res.status(200).json({
+
+            reply:
+                "🌸 Please log in first so I can use your saved Beauty Profile to suggest suitable skincare ingredients."
+
+        });
+
+    }
+
+
+    // --------------------------------------------------
+    // USER MUST HAVE COMPLETED BEAUTY QUIZ
+    // --------------------------------------------------
+
+    if (
+        !beautyProfile ||
+        beautyProfile.completed !== true
+    ) {
+
+        return res.status(200).json({
+
+            reply:
+                "🌸 I don't have a completed Beauty Profile for you yet.\n\n" +
+                "Please complete the GlowGuide Beauty Quiz first so I can consider your skin type, skin concerns and ingredient sensitivities."
+
+        });
+
+    }
+
+
+    const profileSkinType =
+        beautyProfile.skinType || "";
+
+    const profileConcerns =
+        Array.isArray(beautyProfile.skinConcerns)
+            ? beautyProfile.skinConcerns
+            : [];
+
+    const profileSensitivities =
+        Array.isArray(beautyProfile.sensitivities)
+            ? beautyProfile.sensitivities
+            : [];
+
+
+    // --------------------------------------------------
+    // GET ONLY INGREDIENT RECORDS
+    // --------------------------------------------------
+
+    const ingredientRecords =
+        beautyKnowledge.filter(
+            (item) =>
+                item.type === "ingredient"
+        );
+
+
+    const matchedIngredients = [];
+
+
+    // --------------------------------------------------
+    // CHECK EACH INGREDIENT
+    // --------------------------------------------------
+
+    for (const ingredient of ingredientRecords) {
+
+        let score = 0;
+
+        const reasons = [];
+
+
+        // ----------------------------------------------
+        // SKIN TYPE MATCH
+        // ----------------------------------------------
+
+        const suitableSkinTypes =
+            Array.isArray(
+                ingredient.suitableSkinTypes
+            )
+                ? ingredient.suitableSkinTypes
+                : [];
+
+
+        const skinTypeMatch =
+            suitableSkinTypes.some(
+                (type) =>
+                    String(type)
+                        .toLowerCase()
+                        .trim() ===
+
+                    String(profileSkinType)
+                        .toLowerCase()
+                        .trim()
+            );
+
+
+        if (skinTypeMatch) {
+
+            score += 40;
+
+            reasons.push(
+                `suitable for ${profileSkinType} skin`
+            );
+
+        }
+
+
+        // ----------------------------------------------
+        // SKIN CONCERN MATCH
+        // ----------------------------------------------
+
+        const suitableConcerns =
+            Array.isArray(
+                ingredient.suitableConcerns
+            )
+                ? ingredient.suitableConcerns
+                : [];
+
+
+        const matchedConcerns =
+            profileConcerns.filter(
+                (concern) =>
+
+                    suitableConcerns.some(
+                        (supportedConcern) =>
+
+                            String(supportedConcern)
+                                .toLowerCase()
+                                .trim() ===
+
+                            String(concern)
+                                .toLowerCase()
+                                .trim()
+                    )
+            );
+
+
+        if (
+            profileConcerns.length > 0 &&
+            matchedConcerns.length > 0
+        ) {
+
+            const concernScore =
+                (
+                    matchedConcerns.length /
+                    profileConcerns.length
+                ) * 60;
+
+
+            score += concernScore;
+
+
+            reasons.push(
+                `supports ${matchedConcerns.join(", ")}`
+            );
+
+        }
+
+
+        // ----------------------------------------------
+// SAVE MATCH
+// ----------------------------------------------
+
+// If the customer has selected skin concerns,
+// prefer ingredients that actually support at
+// least one of those concerns.
+//
+// If there are no selected concerns, a skin-type
+// match is enough.
+
+const hasRelevantMatch =
+    profileConcerns.length > 0
+        ? matchedConcerns.length > 0
+        : skinTypeMatch;
+
+
+if (
+    hasRelevantMatch &&
+    score > 0
+) {
+
+    matchedIngredients.push({
+
+        ingredient,
+        score: Math.round(score),
+        reasons
+
+    });
+
+}
+
+    }
+
+
+    // --------------------------------------------------
+    // HIGHEST MATCH FIRST
+    // --------------------------------------------------
+
+    matchedIngredients.sort(
+        (a, b) =>
+            b.score - a.score
+    );
+
+
+    // --------------------------------------------------
+    // NO MATCH
+    // --------------------------------------------------
+
+    if (matchedIngredients.length === 0) {
+
+        return res.status(200).json({
+
+            reply:
+                "🌸 I couldn't find a suitable ingredient match in my GlowGuide Beauty Knowledge for your current Beauty Profile."
+
+        });
+
+    }
+
+
+    // --------------------------------------------------
+    // TAKE BEST 3 INGREDIENTS
+    // --------------------------------------------------
+
+    const topIngredients =
+        matchedIngredients.slice(0, 3);
+
+
+    console.log(
+        "GlowGuide matched ingredients:",
+        topIngredients.map(
+            (item) => ({
+                name: item.ingredient.name,
+                score: item.score
+            })
+        )
+    );
+
+
+    // --------------------------------------------------
+    // BUILD RESPONSE
+    // --------------------------------------------------
+
+    const ingredientText =
+        topIngredients
+            .map(
+                (item, index) =>
+
+                    `${index + 1}. ${item.ingredient.name}\n` +
+                    `${item.ingredient.answer}`
+
+            )
+            .join("\n\n");
+
+
+    const sensitivityText =
+        profileSensitivities.length > 0
+            ? profileSensitivities.join(", ")
+            : "None selected";
+
+
+    return res.status(200).json({
+
+        reply:
+            `🌸 Based on your saved Beauty Profile, these ingredients may be useful to explore:\n\n` +
+
+            `${ingredientText}\n\n` +
+
+            `Your profile shows ${profileSkinType} skin` +
+
+            (
+                profileConcerns.length > 0
+                    ? ` with ${profileConcerns.join(", ")} as your skin concern${profileConcerns.length > 1 ? "s" : ""}`
+                    : ""
+            ) +
+
+            `.\n\n🧪 Saved ingredient sensitivities: ${sensitivityText}.\n\n` +
+
+            `Please remember that individual skin can react differently, so introduce new skincare products carefully. ✨`
+
+    });
+
+}
 
 
         // ==================================================
@@ -1617,26 +2564,272 @@ export async function sendChatMessage(req, res) {
 
         }
 
+        // ==========================================================
+// GLOWGUIDE IDENTITY QUESTIONS
+// ==========================================================
+
+const normalizedMessage = userMessage
+    .toLowerCase()
+    .replace(/[?!.,]/g, "")
+    .trim();
+
+
+// ----------------------------------------------------------
+// WHAT IS GLOWGUIDE AI?
+// ----------------------------------------------------------
+
+const glowGuideAIQuestions = [
+    "what is glowguide ai",
+    "who is glowguide ai",
+    "tell me about glowguide ai"
+];
+
+if (glowGuideAIQuestions.includes(normalizedMessage)) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 GlowGuide AI is your personal beauty assistant inside the GlowGuide online cosmetics store.\n\n" +
+            "I can help you with skincare and beauty questions, explain ingredients, check your saved ingredient sensitivities, " +
+            "recommend suitable products and help you build a personalized skincare routine. ✨"
+    });
+}
+
+
+// ----------------------------------------------------------
+// WHO ARE YOU?
+// ----------------------------------------------------------
+
+const assistantIdentityQuestions = [
+    "who are you",
+    "what is your name",
+    "whats your name",
+    "tell me your name"
+];
+
+if (assistantIdentityQuestions.includes(normalizedMessage)) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 I'm GlowGuide AI, your personal beauty assistant for GlowGuide.\n\n" +
+            "I can help you with skincare, ingredients, beauty questions and personalized product recommendations. ✨"
+    });
+}
+
+
+// ----------------------------------------------------------
+// WHAT IS GLOWGUIDE?
+// ----------------------------------------------------------
+
+const glowGuideStoreQuestions = [
+    "what is glowguide",
+    "tell me about glowguide",
+    "what does glowguide do"
+];
+
+if (glowGuideStoreQuestions.includes(normalizedMessage)) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 GlowGuide is an online cosmetics store where customers can explore skincare, makeup and beauty products.\n\n" +
+            "GlowGuide also provides personalized beauty features to help customers find products based on their preferences and Beauty Profile. ✨"
+    });
+}
+
 
         // ==================================================
-        // 14. FALLBACK RESPONSE
-        // ==================================================
+// 14. AI FALLBACK RESPONSE - OLLAMA / GEMMA
+// ==================================================
 
-        return res.status(200).json({
+try {
 
-            reply:
+    console.log("GlowGuide using Gemma AI fallback");
 
-                "I'm still learning that question 🌸 " +
+    // --------------------------------------------------
+// PREPARE GLOWGUIDE BEAUTY KNOWLEDGE FOR AI
+// --------------------------------------------------
 
-                "You can ask me about product prices, availability, " +
+const beautyKnowledgeContext = beautyKnowledge
+    .map((item) => {
+        return `Topic: ${item.keywords[0]}
+Information: ${item.answer}`;
+    })
+    .join("\n\n");
 
-                "product details, categories, products within your budget, " +
+console.log(
+    `GlowGuide sending ${beautyKnowledge.length} beauty knowledge records to AI`
+);
 
-                "your saved Beauty Profile, personalized product recommendations, " +
+    // --------------------------------------------------
+    // PREPARE CUSTOMER BEAUTY PROFILE FOR AI
+    // --------------------------------------------------
 
-                "or general beauty questions."
+    let beautyProfileContext = `
+CUSTOMER BEAUTY PROFILE:
+- No completed Beauty Profile is available.
 
-        });
+PERSONALIZATION RULE:
+- Give general beauty or skincare guidance.
+- Do not pretend that you know the customer's skin type,
+  concerns, budget or sensitivities.
+`;
+
+    if (
+        beautyProfile &&
+        beautyProfile.completed === true
+    ) {
+
+        const profileConcerns =
+            Array.isArray(beautyProfile.skinConcerns) &&
+            beautyProfile.skinConcerns.length > 0
+                ? beautyProfile.skinConcerns.join(", ")
+                : "None selected";
+
+        const profileSensitivities =
+            Array.isArray(beautyProfile.sensitivities) &&
+            beautyProfile.sensitivities.length > 0
+                ? beautyProfile.sensitivities.join(", ")
+                : "None selected";
+
+        beautyProfileContext = `
+CUSTOMER BEAUTY PROFILE:
+- Skin Type: ${beautyProfile.skinType || "Not selected"}
+- Skin Concerns: ${profileConcerns}
+- Budget: ${beautyProfile.budget || "Not selected"}
+- Saved Ingredient Sensitivities: ${profileSensitivities}
+
+PERSONALIZATION RULES:
+- Use this Beauty Profile when it is relevant to the customer's question.
+- The Beauty Profile is already saved by the customer. Do not ask the customer again for information that is already available in the profile.
+- Use the saved skin type and skin concerns when giving relevant skincare guidance.
+- Use the saved ingredient sensitivities when giving relevant ingredient guidance.
+- If sensitivities are listed in the profile, acknowledge them when relevant instead of asking whether the customer has sensitivities.
+- The Budget value means the customer's product spending preference only.
+- Never describe a High budget as a "high-level", "advanced", "premium" or "high-quality" skincare routine.
+- Do not mention the customer's budget unless the question is about products, prices, shopping or recommendations.
+- When the customer asks which ingredients may suit their skin, give useful ingredient examples based on their saved skin type and concerns.
+- Never say that an ingredient or product is guaranteed safe.
+- Never diagnose a medical condition.
+- Do not force Beauty Profile information into unrelated answers.
+- If the customer's question does not require personalization,
+  answer normally.
+  - If the customer asks "what ingredients are good for my skin" or a similar question,
+  answer the question directly using their saved skin type and skin concerns.
+- Give 2 to 4 relevant skincare ingredient examples and briefly explain each one.
+- Do not ask the customer what they want to learn when their question is already clear.
+- Do not ask for skin type, skin concerns, budget or sensitivities when they are already available in the Beauty Profile.
+`;
+    }
+
+    console.log(
+        "GlowGuide sending Beauty Profile context to AI:",
+        beautyProfileContext
+    );
+
+
+    const aiResponse = await axios.post(
+        "http://localhost:11434/api/generate",
+        {
+            model: "gemma3:1b",
+
+            prompt: `
+You are GlowGuide AI, the personal beauty assistant for an
+online cosmetics store called GlowGuide.
+
+The customer asked:
+"${message}"
+
+${beautyProfileContext}
+
+GLOWGUIDE BEAUTY KNOWLEDGE:
+${beautyKnowledgeContext}
+
+KNOWLEDGE RULES:
+- Use GlowGuide Beauty Knowledge when it contains information relevant to the customer's question.
+- Prefer the information in GlowGuide Beauty Knowledge over inventing beauty facts.
+- Do not invent ingredient benefits that are not supported by the provided GlowGuide Beauty Knowledge.
+- When the customer's Beauty Profile is available, combine relevant Beauty Profile information with relevant GlowGuide Beauty Knowledge.
+- If the provided knowledge does not contain enough information to answer something safely, give a cautious general response instead of making up facts.
+- Do not tell the customer about these internal knowledge records.
+
+IMPORTANT IDENTITY RULES:
+- The online cosmetics store is called "GlowGuide".
+- Your name is "GlowGuide AI".
+- GlowGuide and GlowGuide AI are different:
+  * GlowGuide = the online cosmetics store.
+  * GlowGuide AI = the personal beauty assistant inside the GlowGuide store.
+- Always call the store "GlowGuide".
+- Always call yourself "GlowGuide AI".
+- Never write your name as "Glow Guide AI".
+- If the customer asks "What is GlowGuide?", explain the GlowGuide online cosmetics store. Do NOT introduce yourself.
+- If the customer asks "Who are you?", say: "I'm GlowGuide AI, your personal beauty assistant for GlowGuide."
+- If the customer asks "What is GlowGuide AI?", explain that GlowGuide AI is the personal beauty assistant available in the GlowGuide store.
+- If the customer asks your name, say: "My name is GlowGuide AI."
+- Never call yourself Gemma, Ollama, ChatGPT, or any other AI model.
+- Never mention the underlying AI model or technology to the customer.
+- Do not call yourself an expert, dermatologist, doctor or healthcare professional.
+- Say that you provide general beauty and skincare guidance.
+
+RESPONSE RULES:
+- Be friendly and easy to understand.
+- Use simple English.
+- Focus on skincare, makeup, cosmetics and beauty.
+- Keep the answer reasonably short.
+- Use the customer's Beauty Profile when it is relevant.
+- Do not repeatedly list the whole Beauty Profile.
+- Do not pretend to be a doctor or diagnose medical conditions.
+- For serious skin problems, recommend speaking to a qualified healthcare professional.
+- Do not invent product names, prices, stock or product details.
+- Do not claim that a product is safe for a user's allergies or sensitivities unless that information comes from GlowGuide's saved data.
+- You may use a few friendly emojis such as 🌸 💗 ✨.
+- Answer the customer's question directly.
+- If the customer's question is clear, always provide an actual answer.
+- Do not respond only with another question.
+- Ask a follow-up question only when the customer's request is unclear or important information is missing.
+- Do not introduce yourself unless the customer asks who you are or asks your name.
+- Do not start normal answers with phrases such as "Hello there", "I'm GlowGuide AI", "Okay, here's my response", or "Let's dive in".
+- Avoid unnecessary follow-up questions when you can answer the customer's question directly.
+- Return plain text only.
+- Do not use Markdown formatting.
+- Do not use **, *, #, backticks or Markdown headings.
+- For a short list, use simple numbered points such as "1.", "2.", "3.".
+`,
+
+            stream: false
+        }
+    );
+
+
+    let aiReply = aiResponse.data.response || "";
+
+aiReply = aiReply
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/^\s*\*\s+/gm, "• ")
+    .replace(/`/g, "")
+    .trim();
+
+    return res.status(200).json({
+        reply: aiReply
+    });
+
+
+} catch (aiError) {
+
+    console.error(
+        "GlowGuide Gemma AI error:",
+        aiError.message
+    );
+
+
+    return res.status(200).json({
+
+        reply:
+            "I'm still learning that question 🌸 " +
+            "Please try asking me something about skincare, " +
+            "makeup, ingredients or GlowGuide products."
+
+    });
+
+}
 
 
     } catch (error) {
