@@ -107,13 +107,12 @@ export async function sendChatMessage(req, res) {
             );
 
         const askingBeautyBudget =
-            userMessage.includes("my budget") ||
-            userMessage.includes(
-                "what is my budget"
-            ) ||
-            userMessage.includes(
-                "budget preference"
-            );
+    userMessage === "my budget" ||
+    userMessage.includes("what is my budget") ||
+    userMessage.includes("what's my budget") ||
+    userMessage.includes("show my budget") ||
+    userMessage.includes("show me my budget") ||
+    userMessage.includes("what is my budget preference");
 
         const askingSensitivities =
             userMessage.includes(
@@ -303,16 +302,605 @@ export async function sendChatMessage(req, res) {
             "find a product for me",
 
             "suggest products for me",
-            "suggest a product for me"
+            "suggest a product for me",
+
+            "recommend something within my budget",
+"recommend products within my budget",
+"recommend a product within my budget",
+"show products within my budget",
+"show me products within my budget",
+"find products within my budget",
+"find something within my budget",
+"suggest something within my budget",
+"what can i buy within my budget",
+"what can i get within my budget"
 
         ];
 
+       // ==========================================
+// DETECT SPECIFIC SKINCARE PRODUCT TYPE
+// ==========================================
 
-        const askingForPersonalizedRecommendation =
-            personalizedRecommendationPatterns.some(
-                (pattern) =>
-                    userMessage.includes(pattern)
+const skincareProductTypes = [
+    "cleanser",
+    "toner",
+    "serum",
+    "moisturizer",
+    "moisturiser",
+    "sunscreen"
+];
+
+const requestedSkincareType =
+    skincareProductTypes.find(
+        (type) => userMessage.includes(type)
+    ) || null;
+
+ // ==========================================
+// CHECK IF USER SPECIFICALLY ASKS FOR BUDGET
+// ==========================================
+
+const askingWithinBudget =
+    userMessage.includes("within my budget") ||
+    userMessage.includes("in my budget") ||
+    userMessage.includes("for my budget") ||
+    userMessage.includes("according to my budget") ||
+    userMessage.includes("affordable for me") ||
+    userMessage.includes("within budget");   
+
+// ==========================================
+// DETECT PERSONALIZED PRODUCT-TYPE REQUEST
+// Example:
+// "Recommend a moisturizer within my budget"
+// ==========================================
+
+const askingForSpecificSkincareRecommendation =
+    requestedSkincareType !== null &&
+    (
+        userMessage.includes("recommend") ||
+        userMessage.includes("suggest") ||
+        userMessage.includes("find") ||
+        userMessage.includes("within my budget") ||
+        userMessage.includes("for me")
+    );
+        
+        // ==========================================
+// DETECT PERSONALIZED SKIN / CONCERN REQUEST
+// Examples:
+// "Recommend a product for my dry skin"
+// "Recommend something for my acne"
+// ==========================================
+
+const profileSkinWords = [
+    "dry skin",
+    "oily skin",
+    "sensitive skin",
+    "combination skin",
+    "normal skin"
+];
+
+const profileConcernWords = [
+    "acne",
+    "dryness",
+    "oiliness",
+    "redness",
+    "dark spots",
+    "aging"
+];
+
+const mentionsSkinType =
+    profileSkinWords.some(
+        (word) => userMessage.includes(word)
+    );
+
+const mentionsSkinConcern =
+    profileConcernWords.some(
+        (word) => userMessage.includes(word)
+    );
+
+const containsRecommendationRequest =
+    userMessage.includes("recommend") ||
+    userMessage.includes("suggest") ||
+    userMessage.includes("find");
+
+const askingForSkinBasedRecommendation =
+    containsRecommendationRequest &&
+    (
+        mentionsSkinType ||
+        mentionsSkinConcern
+    );
+
+const askingForPersonalizedRecommendation =
+    personalizedRecommendationPatterns.some(
+        (pattern) =>
+            userMessage.includes(pattern)
+    ) ||
+    askingForSpecificSkincareRecommendation ||
+    askingForSkinBasedRecommendation;
+
+// ==========================================
+// DETECT "RECOMMEND WITHOUT INGREDIENT"
+// Example:
+// "Recommend a product that doesn't contain sulfates"
+// "Find me something without fragrance"
+// ==========================================
+
+const ingredientExclusionPatterns = [
+    /(?:recommend|suggest|find|show).*?(?:without|doesn't contain|does not contain|free from)\s+([a-zA-Z\s-]+)/i,
+    /(?:product|something).*?(?:without|doesn't contain|does not contain|free from)\s+([a-zA-Z\s-]+)/i
+];
+
+let excludedIngredient = null;
+
+for (const pattern of ingredientExclusionPatterns) {
+
+    const match = message.match(pattern);
+
+    if (match && match[1]) {
+
+        excludedIngredient = match[1]
+            .toLowerCase()
+            .trim()
+            .replace(/[?.!,]+$/, "");
+
+        break;
+    }
+}
+
+const askingForIngredientFreeRecommendation =
+    excludedIngredient !== null;
+
+console.log(
+    "GlowGuide ingredient-free recommendation:",
+    askingForIngredientFreeRecommendation,
+    excludedIngredient
+);
+    
+// ==========================================
+// DETECT INGREDIENT CHECKER REQUEST
+// ==========================================
+
+const ingredientCheckerPatterns = [
+    /is .* safe for me/i,
+    /is this product safe/i,
+    /is this safe for me/i,
+    /check .* ingredients/i,
+    /check the ingredients/i,
+    /does .* contain/i,
+    /does this contain/i,
+    /ingredient checker/i,
+    /check this product/i,
+    /can i use this product/i,
+    /can i use .* with my sensitivities/i,
+    /safe with my sensitivities/i
+];
+
+const askingForIngredientCheck =
+    ingredientCheckerPatterns.some(
+        (pattern) =>
+            pattern.test(message)
+    );
+
+console.log(
+    "GlowGuide ingredient checker detected:",
+    askingForIngredientCheck
+);
+
+// ==========================================
+// EXPLAIN LAST RECOMMENDATION REQUEST
+// ==========================================
+
+const explanationPatterns = [
+    /why did you recommend/i,
+    /why did you recommend this/i,
+    /why did you recommend it/i,
+    /why this product/i,
+    /why is this suitable/i,
+    /why is this good for me/i,
+    /why did you choose/i,
+    /explain this recommendation/i,
+    /explain why/i
+];
+
+const askingForRecommendationExplanation =
+    explanationPatterns.some((pattern) =>
+        pattern.test(message)
+    );
+
+console.log(
+    "GlowGuide explanation request detected:",
+    askingForRecommendationExplanation
+);
+// ==========================================
+// HANDLE INGREDIENT CHECKER REQUEST
+// ==========================================
+
+if (askingForIngredientCheck) {
+
+    console.log(
+        "GlowGuide handling ingredient checker request"
+    );
+
+    // ------------------------------------------
+    // USER MUST BE LOGGED IN
+    // ------------------------------------------
+
+    if (!req.user) {
+
+        return res.status(200).json({
+            reply:
+                "🌸 Please log in first so I can check products against your saved ingredient sensitivities."
+        });
+    }
+
+
+    // ------------------------------------------
+    // BEAUTY QUIZ MUST BE COMPLETED
+    // ------------------------------------------
+
+    if (
+        !beautyProfile ||
+        beautyProfile.completed !== true
+    ) {
+
+        return res.status(200).json({
+            reply:
+                "🌸 Please complete the GlowGuide Beauty Quiz first so I can check products against your saved ingredient sensitivities."
+        });
+    }
+
+
+    // ------------------------------------------
+// FIND PRODUCT FOR INGREDIENT CHECK
+// ------------------------------------------
+
+const availableProducts =
+    await Product.find({
+        isAvailable: true
+    });
+
+
+// First try to find a product name
+// directly mentioned in the current message
+let ingredientCheckProduct =
+    availableProducts.find((product) => {
+
+        if (!product.name) {
+            return false;
+        }
+
+        return userMessage.includes(
+            product.name
+                .toLowerCase()
+                .trim()
+        );
+    });
+
+
+// ------------------------------------------
+// IF NO PRODUCT NAME IS IN THE MESSAGE,
+// USE THE PRODUCT REMEMBERED BY CHATBOT
+// ------------------------------------------
+
+if (
+    !ingredientCheckProduct &&
+    lastProduct &&
+    String(lastProduct).trim() !== ""
+) {
+
+    console.log(
+        "GlowGuide trying remembered product:",
+        lastProduct
+    );
+
+    ingredientCheckProduct =
+        availableProducts.find((product) => {
+
+            if (!product.name) {
+                return false;
+            }
+
+            return (
+                product.name
+                    .toLowerCase()
+                    .trim() ===
+                String(lastProduct)
+                    .toLowerCase()
+                    .trim()
             );
+        });
+}
+
+
+// ------------------------------------------
+// DEBUG
+// ------------------------------------------
+
+console.log(
+    "GlowGuide ingredient checker selected product:",
+    ingredientCheckProduct
+        ? ingredientCheckProduct.name
+        : "No product found"
+);
+
+
+    // ------------------------------------------
+    // PRODUCT NOT FOUND
+    // ------------------------------------------
+
+    if (!ingredientCheckProduct) {
+
+        return res.status(200).json({
+            reply:
+                "🌸 I couldn't identify which GlowGuide product you want me to check. Please include the full product name."
+        });
+    }
+
+
+    console.log(
+        "GlowGuide ingredient checker product:",
+        ingredientCheckProduct.name
+    );
+
+
+    // ------------------------------------------
+    // FIND RECOMMENDATION DATA
+    // ------------------------------------------
+
+    const ingredientRecommendation =
+        await RecommendationData.findOne({
+            productId:
+                ingredientCheckProduct.productId
+        });
+
+
+    if (!ingredientRecommendation) {
+
+        return res.status(200).json({
+            reply:
+                `🌸 I found ${ingredientCheckProduct.name}, but I don't have ingredient safety information for this product yet.`
+        });
+    }
+
+
+    // ------------------------------------------
+    // GET SAVED SENSITIVITIES
+    // ------------------------------------------
+
+    const savedSensitivities =
+        Array.isArray(beautyProfile.sensitivities)
+            ? beautyProfile.sensitivities
+            : [];
+
+
+    const productWarnings =
+        Array.isArray(
+            ingredientRecommendation.ingredientWarnings
+        )
+            ? ingredientRecommendation.ingredientWarnings
+            : [];
+
+
+    const productIngredients =
+        Array.isArray(
+            ingredientRecommendation.ingredients
+        )
+            ? ingredientRecommendation.ingredients
+            : [];
+
+
+    // ------------------------------------------
+    // FIND CONFLICTS
+    // ------------------------------------------
+
+    const conflicts =
+        savedSensitivities.filter(
+            (sensitivity) =>
+
+                productWarnings.some(
+                    (warning) =>
+
+                        String(warning)
+                            .toLowerCase()
+                            .trim() ===
+
+                        String(sensitivity)
+                            .toLowerCase()
+                            .trim()
+                )
+        );
+
+
+    // ------------------------------------------
+    // CREATE DISPLAY TEXT
+    // ------------------------------------------
+
+    const ingredientText =
+        productIngredients.length > 0
+            ? productIngredients.join(", ")
+            : "No ingredient information available";
+
+
+    const warningText =
+        productWarnings.length > 0
+            ? productWarnings.join(", ")
+            : "None";
+
+
+    const sensitivityText =
+        savedSensitivities.length > 0
+            ? savedSensitivities.join(", ")
+            : "None selected";
+
+
+    // ------------------------------------------
+    // UNSAFE / CONFLICT FOUND
+    // ------------------------------------------
+
+    if (conflicts.length > 0) {
+
+        console.log(
+            "GlowGuide ingredient conflict:",
+            conflicts
+        );
+
+        return res.status(200).json({
+
+            reply:
+                `🧪 INGREDIENT CHECK\n\n` +
+
+                `Product: ${ingredientCheckProduct.name}\n\n` +
+
+                `Key Ingredients: ${ingredientText}\n` +
+
+                `Ingredient Warnings: ${warningText}\n\n` +
+
+                `Your Saved Sensitivities: ${sensitivityText}\n\n` +
+
+                `⚠️ I found a conflict with your saved sensitivity to ${conflicts.join(", ")}.\n\n` +
+
+                `Based on your GlowGuide Beauty Profile, I would avoid this product.`
+        });
+    }
+
+
+    // ------------------------------------------
+    // NO CONFLICT FOUND
+    // ------------------------------------------
+
+    return res.status(200).json({
+
+        reply:
+            `🧪 INGREDIENT CHECK\n\n` +
+
+            `Product: ${ingredientCheckProduct.name}\n\n` +
+
+            `Key Ingredients: ${ingredientText}\n` +
+
+            `Ingredient Warnings: ${warningText}\n\n` +
+
+            `Your Saved Sensitivities: ${sensitivityText}\n\n` +
+
+            `✅ I couldn't find a conflict between this product's recorded ingredient warnings and your saved sensitivities.\n\n` +
+
+            `Based on the ingredient information currently stored in GlowGuide, this product does not conflict with your selected sensitivities. ✨`
+    });
+}
+
+// ==================================================
+// HANDLE INGREDIENT-FREE PRODUCT RECOMMENDATION
+// ==================================================
+
+if (askingForIngredientFreeRecommendation) {
+
+    console.log(
+        "GlowGuide searching for products without:",
+        excludedIngredient
+    );
+
+    const availableProductsForIngredientSearch =
+        await Product.find({
+            isAvailable: true,
+            stock: { $gt: 0 }
+        });
+
+    const recommendationRecords =
+        await RecommendationData.find({});
+
+    const safeProducts = [];
+
+    for (const product of availableProductsForIngredientSearch) {
+
+        const recommendation =
+            recommendationRecords.find((record) =>
+                String(record.productId)
+                    .toLowerCase()
+                    .trim() ===
+                String(product.productId)
+                    .toLowerCase()
+                    .trim()
+            );
+
+        // We need ingredient data before claiming
+        // that the product avoids an ingredient.
+        if (!recommendation) {
+            continue;
+        }
+
+        const ingredients =
+            Array.isArray(recommendation.ingredients)
+                ? recommendation.ingredients
+                : [];
+
+        const warnings =
+            Array.isArray(recommendation.ingredientWarnings)
+                ? recommendation.ingredientWarnings
+                : [];
+
+                // Do not make an ingredient-free claim
+// when no ingredient information is stored.
+if (ingredients.length === 0) {
+    continue;
+}
+
+        const ingredientExists =
+            ingredients.some((ingredient) =>
+                String(ingredient)
+                    .toLowerCase()
+                    .includes(excludedIngredient)
+            );
+
+        const warningExists =
+            warnings.some((warning) =>
+                String(warning)
+                    .toLowerCase()
+                    .includes(excludedIngredient)
+            );
+
+        if (!ingredientExists && !warningExists) {
+
+            safeProducts.push(product);
+
+        }
+    }
+
+    if (safeProducts.length === 0) {
+
+        return res.status(200).json({
+            reply:
+                `🌸 I couldn't find an available GlowGuide product that I can confirm does not contain ${excludedIngredient} right now.\n\n` +
+                `I only recommend products when I have enough ingredient information to check them.`
+        });
+    }
+
+    const topSafeProducts =
+        safeProducts.slice(0, 3);
+
+    const productText =
+        topSafeProducts
+            .map(
+                (product, index) =>
+                    `${index + 1}. ${product.name}\n` +
+                    `   Rs. ${product.price}\n` +
+                    `   Stock: ${product.stock}`
+            )
+            .join("\n\n");
+
+    return res.status(200).json({
+
+        reply:
+            `🌸 Here are available GlowGuide products whose recorded ingredient information does not list ${excludedIngredient}:\n\n` +
+            `${productText}\n\n` +
+            `✨ I checked the ingredient information currently stored in GlowGuide.`,
+
+        recommendations:
+            topSafeProducts.map((product) => ({
+                productId: product.productId,
+                name: product.name,
+                price: product.price
+            }))
+
+    });
+}
 
 
         if (askingForPersonalizedRecommendation) {
@@ -402,6 +990,64 @@ export async function sendChatMessage(req, res) {
                 const recommendation
                 of recommendationRecords
             ) {
+
+                // ==========================================
+// FILTER BY REQUESTED SKINCARE TYPE
+// ==========================================
+
+if (requestedSkincareType) {
+
+    const normalizedRequestedType =
+        requestedSkincareType === "moisturiser"
+            ? "moisturizer"
+            : requestedSkincareType;
+
+    const productRoutineStep =
+        recommendation.routineStep
+            ? recommendation.routineStep
+                  .toLowerCase()
+                  .trim()
+            : "";
+
+    // Skip recommendation records that are
+    // not the skincare type requested
+    if (
+        productRoutineStep !==
+        normalizedRequestedType
+    ) {
+        continue;
+    }
+}
+
+// ==========================================
+// STRICT BUDGET FILTER
+// Only used when customer asks "within my budget"
+// ==========================================
+
+if (askingWithinBudget && budget) {
+
+    const supportedBudgetLevels =
+        Array.isArray(recommendation.budgetLevels)
+            ? recommendation.budgetLevels.map(
+                  (level) =>
+                      String(level)
+                          .toLowerCase()
+                          .trim()
+              )
+            : [];
+
+    const customerBudget =
+        String(budget)
+            .toLowerCase()
+            .trim();
+
+    if (
+        supportedBudgetLevels.length > 0 &&
+        !supportedBudgetLevels.includes(customerBudget)
+    ) {
+        continue;
+    }
+}
 
                 const product =
                     await Product.findOne({
@@ -786,7 +1432,7 @@ export async function sendChatMessage(req, res) {
                 return res.status(200).json({
 
                     reply:
-                        "🌸 I couldn't find a suitable GlowNest product that matches your saved Beauty Profile right now.\n\n" +
+                        "🌸 I couldn't find a suitable GlowGuide product that matches your saved Beauty Profile right now.\n\n" +
 
                         "I also avoided products that conflict with your ingredient sensitivities."
 
@@ -1084,7 +1730,7 @@ routineProducts.forEach((product) => {
 // IDENTIFY PRODUCTS FOR ROUTINE STEPS
 // ------------------------------------------
 
-const routineCleanser = routineProducts.find((product) => {
+const routineCleansers = routineProducts.filter((product) => {
 
     const name = product.name.toLowerCase();
 
@@ -1096,7 +1742,7 @@ const routineCleanser = routineProducts.find((product) => {
 });
 
 
-const routineSerum = routineProducts.find((product) => {
+const routineSerums = routineProducts.filter((product) => {
 
     const name = product.name.toLowerCase();
 
@@ -1106,7 +1752,7 @@ const routineSerum = routineProducts.find((product) => {
 });
 
 
-const routineMoisturizer = routineProducts.find((product) => {
+const routineMoisturizers = routineProducts.filter((product) => {
 
     const name = product.name.toLowerCase();
 
@@ -1118,7 +1764,7 @@ const routineMoisturizer = routineProducts.find((product) => {
 });
 
 
-const routineSunscreen = routineProducts.find((product) => {
+const routineSunscreens = routineProducts.filter((product) => {
 
     const name = product.name.toLowerCase();
 
@@ -1133,31 +1779,23 @@ const routineSunscreen = routineProducts.find((product) => {
 console.log("GlowGuide routine product matches:");
 
 console.log(
-    "Cleanser:",
-    routineCleanser
-        ? routineCleanser.name
-        : "No matching product"
+    "Cleansers:",
+    routineCleansers.map((product) => product.name)
 );
 
 console.log(
-    "Serum:",
-    routineSerum
-        ? routineSerum.name
-        : "No matching product"
+    "Serums:",
+    routineSerums.map((product) => product.name)
 );
 
 console.log(
-    "Moisturizer:",
-    routineMoisturizer
-        ? routineMoisturizer.name
-        : "No matching product"
+    "Moisturizers:",
+    routineMoisturizers.map((product) => product.name)
 );
 
 console.log(
-    "Sunscreen:",
-    routineSunscreen
-        ? routineSunscreen.name
-        : "No matching product"
+    "Sunscreens:",
+    routineSunscreens.map((product) => product.name)
 );
 
 // ------------------------------------------
@@ -1172,71 +1810,79 @@ console.log(
 );
 
 
-// ------------------------------------------
-// FIND RECOMMENDATION DATA FOR A PRODUCT
-// ------------------------------------------
+// ----------------------------------------------
+// FIND RECOMMENDATION DATA FOR ROUTINE PRODUCTS
+// ----------------------------------------------
 
-function getRoutineRecommendation(product) {
+function getRoutineCandidates(productsForStep) {
 
-    if (!product) {
-        return null;
-    }
+    return productsForStep
+        .map((product) => {
 
-    return routineRecommendationRecords.find(
-        (record) =>
-            String(record.productId)
-                .toLowerCase()
-                .trim() ===
-            String(product.productId)
-                .toLowerCase()
-                .trim()
-    );
+            const recommendation =
+                routineRecommendationRecords.find((record) =>
+
+                    String(record.productId)
+                        .toLowerCase()
+                        .trim() ===
+
+                    String(product.productId)
+                        .toLowerCase()
+                        .trim()
+                );
+
+            return {
+                product,
+                recommendation
+            };
+
+        })
+        .filter((item) => item.recommendation);
 }
 
 
-const cleanserRecommendation =
-    getRoutineRecommendation(routineCleanser);
+// ----------------------------------------------
+// CREATE CANDIDATES FOR EACH ROUTINE STEP
+// ----------------------------------------------
 
-const serumRecommendation =
-    getRoutineRecommendation(routineSerum);
+const cleanserCandidates =
+    getRoutineCandidates(routineCleansers);
 
-const moisturizerRecommendation =
-    getRoutineRecommendation(routineMoisturizer);
+const serumCandidates =
+    getRoutineCandidates(routineSerums);
 
-const sunscreenRecommendation =
-    getRoutineRecommendation(routineSunscreen);
+const moisturizerCandidates =
+    getRoutineCandidates(routineMoisturizers);
+
+const sunscreenCandidates =
+    getRoutineCandidates(routineSunscreens);
 
 
-console.log("GlowGuide routine recommendation data:");
+// ----------------------------------------------
+// DEBUG
+// ----------------------------------------------
+
+console.log("GlowGuide routine candidates:");
 
 console.log(
-    "Cleanser:",
-    cleanserRecommendation
-        ? "Recommendation data found"
-        : "No recommendation data"
+    "Cleanser candidates:",
+    cleanserCandidates.map((item) => item.product.name)
 );
 
 console.log(
-    "Serum:",
-    serumRecommendation
-        ? "Recommendation data found"
-        : "No recommendation data"
+    "Serum candidates:",
+    serumCandidates.map((item) => item.product.name)
 );
 
 console.log(
-    "Moisturizer:",
-    moisturizerRecommendation
-        ? "Recommendation data found"
-        : "No recommendation data"
+    "Moisturizer candidates:",
+    moisturizerCandidates.map((item) => item.product.name)
 );
 
 console.log(
-    "Sunscreen:",
-    sunscreenRecommendation
-        ? "Recommendation data found"
-        : "No recommendation data"
+    "Sunscreen candidates:",
+    sunscreenCandidates.map((item) => item.product.name)
 );
-
     // ------------------------------------------
     // GET SAVED PROFILE
     // ------------------------------------------
@@ -1505,44 +2151,90 @@ function isRoutineProductSuitable(product, recommendation) {
 }
 
 
-// ------------------------------------------
-// CHECK CURRENT ROUTINE PRODUCTS
-// ------------------------------------------
+// ----------------------------------------
+// SELECT BEST SAFE PRODUCT FOR EACH STEP
+// ----------------------------------------
+
+function findSuitableRoutineProduct(candidates) {
+
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+        return null;
+    }
+
+    // First try to find a product that fully matches
+    // the saved beauty profile.
+    const suitableCandidate = candidates.find((item) => {
+
+        if (!item || !item.product || !item.recommendation) {
+            return false;
+        }
+
+        return isRoutineProductSuitable(
+            item.product,
+            item.recommendation
+        );
+    });
+
+    if (suitableCandidate) {
+        return suitableCandidate.product;
+    }
+
+    // If recommendation data exists but nothing fully matches,
+    // do not recommend an unsuitable product.
+    return null;
+}
+
+
+// ----------------------------------------
+// SELECT PRODUCTS
+// ----------------------------------------
 
 const safeRoutineCleanser =
-    isRoutineProductSuitable(
-        routineCleanser,
-        cleanserRecommendation
-    )
-        ? routineCleanser
-        : null;
-
+    findSuitableRoutineProduct(cleanserCandidates);
 
 const safeRoutineSerum =
-    isRoutineProductSuitable(
-        routineSerum,
-        serumRecommendation
-    )
-        ? routineSerum
-        : null;
-
+    findSuitableRoutineProduct(serumCandidates);
 
 const safeRoutineMoisturizer =
-    isRoutineProductSuitable(
-        routineMoisturizer,
-        moisturizerRecommendation
-    )
-        ? routineMoisturizer
-        : null;
-
+    findSuitableRoutineProduct(moisturizerCandidates);
 
 const safeRoutineSunscreen =
-    isRoutineProductSuitable(
-        routineSunscreen,
-        sunscreenRecommendation
-    )
-        ? routineSunscreen
-        : null;
+    findSuitableRoutineProduct(sunscreenCandidates);
+
+
+// ----------------------------------------
+// TEST RESULTS
+// ----------------------------------------
+
+console.log("GlowGuide suitable routine products:");
+
+console.log(
+    "Cleanser:",
+    safeRoutineCleanser
+        ? `${safeRoutineCleanser.productId} - ${safeRoutineCleanser.name}`
+        : "No suitable product"
+);
+
+console.log(
+    "Serum:",
+    safeRoutineSerum
+        ? `${safeRoutineSerum.productId} - ${safeRoutineSerum.name}`
+        : "No suitable product"
+);
+
+console.log(
+    "Moisturizer:",
+    safeRoutineMoisturizer
+        ? `${safeRoutineMoisturizer.productId} - ${safeRoutineMoisturizer.name}`
+        : "No suitable product"
+);
+
+console.log(
+    "Sunscreen:",
+    safeRoutineSunscreen
+        ? `${safeRoutineSunscreen.productId} - ${safeRoutineSunscreen.name}`
+        : "No suitable product"
+);
 
 
 // ------------------------------------------
@@ -1586,24 +2278,88 @@ console.log(
     // ------------------------------------------
 
     return res.status(200).json({
+    reply:
+        `🌸 Here is your personalized GlowGuide skincare routine.\n\n` +
 
-        reply:
-            `🌸 Here is your personalized GlowGuide skincare routine.\n\n` +
+        `💗 YOUR BEAUTY PROFILE\n` +
+        `Skin Type: ${routineSkinType}\n` +
+        `Skin Concerns: ${routineConcernText}\n` +
+        `Ingredient Sensitivities: ${routineSensitivityText}\n\n` +
 
-            `Your Beauty Profile:\n` +
-            `Skin Type: ${routineSkinType}\n` +
-            `Skin Concerns: ${routineConcernText}\n` +
-            `Ingredient Sensitivities: ${routineSensitivityText}\n\n` +
+        ` 🌞 MORNING ROUTINE\n` +
+`1. Cleanser - ${
+    safeRoutineCleanser
+        ? safeRoutineCleanser.name
+        : "No suitable cleanser currently available"
+}\n` +
+`2. Serum - ${
+    safeRoutineSerum
+        ? safeRoutineSerum.name
+        : "No suitable serum currently available"
+}\n` +
+`3. Moisturizer - ${
+    safeRoutineMoisturizer
+        ? safeRoutineMoisturizer.name
+        : "No suitable moisturizer currently available"
+}\n` +
+`4. Sunscreen - ${
+    safeRoutineSunscreen
+        ? safeRoutineSunscreen.name
+        : "No suitable sunscreen currently available"
+}\n\n` +
 
-            `☀️ MORNING ROUTINE\n\n` +
-            `${morningRoutine.join("\n")}\n\n` +
+        `🛍️ RECOMMENDED PRODUCTS\n\n` +
 
-            `🌙 NIGHT ROUTINE\n\n` +
-            `${nightRoutine.join("\n")}\n\n` +
+        `🧼 Cleanser: ${
+            safeRoutineCleanser
+                ? `${safeRoutineCleanser.name} - Rs. ${safeRoutineCleanser.price}`
+                : "No suitable cleanser is currently available"
+        }\n` +
 
-            `✨ This is general skincare guidance based on your saved Beauty Profile. Introduce new products carefully because individual skin can react differently.`
+        `💧 Serum: ${
+            safeRoutineSerum
+                ? `${safeRoutineSerum.name} - Rs. ${safeRoutineSerum.price}`
+                : "No suitable serum is currently available"
+        }\n` +
 
-    });
+        `🧴 Moisturizer: ${
+            safeRoutineMoisturizer
+                ? `${safeRoutineMoisturizer.name} - Rs. ${safeRoutineMoisturizer.price}`
+                : "No suitable moisturizer is currently available"
+        }\n` +
+
+        `☀️ Sunscreen: ${
+            safeRoutineSunscreen
+                ? `${safeRoutineSunscreen.name} - Rs. ${safeRoutineSunscreen.price}`
+                : "No suitable sunscreen is currently available"
+        }\n\n` +
+
+        ` 🌙 NIGHT ROUTINE\n` +
+`1. Cleanser - ${
+    safeRoutineCleanser
+        ? safeRoutineCleanser.name
+        : "No suitable cleanser currently available"
+}\n` +
+`2. Serum - ${
+    safeRoutineSerum
+        ? safeRoutineSerum.name
+        : "No suitable serum currently available"
+}\n` +
+`3. Moisturizer - ${
+    safeRoutineMoisturizer
+        ? safeRoutineMoisturizer.name
+        : "No suitable moisturizer currently available"
+}\n\n` +
+
+        `✨ These recommendations are based on your saved Beauty Profile and the products currently available in GlowGuide. Introduce new products carefully because individual skin can react differently.`,
+
+    routineProducts: {
+        cleanser: safeRoutineCleanser || null,
+        serum: safeRoutineSerum || null,
+        moisturizer: safeRoutineMoisturizer || null,
+        sunscreen: safeRoutineSunscreen || null
+    }
+});
 }
 
 
@@ -1811,7 +2567,7 @@ console.log(
 
                         `🌸 I can help you with ${detectedConcern}.\n\n` +
 
-                        `To recommend suitable GlowNest products, I also need to know your skin type, budget and ingredient sensitivities.\n\n` +
+                        `To recommend suitable GlowGuide products, I also need to know your skin type, budget and ingredient sensitivities.\n\n` +
 
                         `💗 Take the GlowGuide Beauty Quiz for your personalized recommendations.`
 
@@ -2300,10 +3056,19 @@ if (
 
 
         if (
-            !matchedProduct &&
-            askingAboutPreviousProduct &&
-            lastProduct
-        ) {
+    !matchedProduct &&
+    lastProduct &&
+    (
+        askingAboutPreviousProduct ||
+        userMessage.includes("why did you recommend") ||
+        userMessage.includes("why do you recommend") ||
+        userMessage.includes("why was this recommended") ||
+        userMessage.includes("why this product") ||
+        userMessage.includes("why is this suitable") ||
+        userMessage.includes("why is it suitable") ||
+        userMessage.includes("why is this good for me")
+    )
+) {
 
             matchedProduct =
                 products.find(
@@ -2330,6 +3095,15 @@ if (
 
         }
 
+        console.log("WHY DEBUG =====================");
+console.log("Message:", userMessage);
+console.log("Last Product:", lastProduct);
+console.log(
+    "Matched Product:",
+    matchedProduct ? matchedProduct.name : "NONE"
+);
+console.log("================================");
+
 
         // ==================================================
         // 12. CUSTOMER IS ASKING ABOUT PRODUCT
@@ -2341,6 +3115,205 @@ if (
                 "GlowGuide matched product:",
                 matchedProduct.name
             );
+
+        // ------------------------------------------
+// WHY WAS THIS PRODUCT RECOMMENDED?
+// ------------------------------------------
+
+const askingWhyRecommended =
+    userMessage.includes("why did you recommend") ||
+    userMessage.includes("why do you recommend") ||
+    userMessage.includes("why was this recommended") ||
+    userMessage.includes("why this product") ||
+    userMessage.includes("why is this suitable") ||
+    userMessage.includes("why is it suitable") ||
+    userMessage.includes("why is this good for me");
+
+
+if (askingWhyRecommended) {
+
+    // User needs a completed Beauty Profile
+    if (
+        !beautyProfile ||
+        beautyProfile.completed !== true
+    ) {
+
+        return res.status(200).json({
+            reply:
+                `🌸 I recommended ${matchedProduct.name} based on the product information available in GlowGuide.\n\n` +
+                `Complete the GlowGuide Beauty Quiz so I can explain how products match your personal skin needs.`,
+            productName: matchedProduct.name
+        });
+
+    }
+
+
+    // Find recommendation information for this product
+    const recommendation =
+        await RecommendationData.findOne({
+            productId: matchedProduct.productId
+        });
+
+
+    if (!recommendation) {
+
+        return res.status(200).json({
+            reply:
+                `🌸 ${matchedProduct.name} is available in GlowGuide, but I don't have enough recommendation information to explain a personalized match for this product.`,
+            productName: matchedProduct.name
+        });
+
+    }
+
+
+    const reasons = [];
+
+
+    // ------------------------------------------
+    // SKIN TYPE
+    // ------------------------------------------
+
+    const supportedSkinTypes =
+        Array.isArray(recommendation.skinTypes)
+            ? recommendation.skinTypes.map(
+                (type) =>
+                    String(type)
+                        .toLowerCase()
+                        .trim()
+            )
+            : [];
+
+
+    if (
+        beautyProfile.skinType &&
+        supportedSkinTypes.includes(
+            beautyProfile.skinType
+                .toLowerCase()
+                .trim()
+        )
+    ) {
+
+        reasons.push(
+            `it is suitable for your ${beautyProfile.skinType} skin`
+        );
+
+    }
+
+
+    // ------------------------------------------
+    // SKIN CONCERNS
+    // ------------------------------------------
+
+    const supportedConcerns =
+        Array.isArray(recommendation.skinConcerns)
+            ? recommendation.skinConcerns
+            : [];
+
+
+    const matchedConcerns =
+        (beautyProfile.skinConcerns || []).filter(
+            (concern) =>
+
+                supportedConcerns.some(
+                    (supportedConcern) =>
+
+                        String(supportedConcern)
+                            .toLowerCase()
+                            .trim() ===
+
+                        String(concern)
+                            .toLowerCase()
+                            .trim()
+                )
+        );
+
+
+    if (matchedConcerns.length > 0) {
+
+        reasons.push(
+            `it supports your ${matchedConcerns.join(", ")} concern${matchedConcerns.length > 1 ? "s" : ""}`
+        );
+
+    }
+
+
+    // ------------------------------------------
+    // INGREDIENT SENSITIVITY
+    // ------------------------------------------
+
+    const warnings =
+        Array.isArray(recommendation.ingredientWarnings)
+            ? recommendation.ingredientWarnings
+            : [];
+
+
+    const hasSensitivityConflict =
+        (beautyProfile.sensitivities || []).some(
+            (sensitivity) =>
+
+                warnings.some(
+                    (warning) =>
+
+                        String(warning)
+                            .toLowerCase()
+                            .trim() ===
+
+                        String(sensitivity)
+                            .toLowerCase()
+                            .trim()
+                )
+        );
+
+
+    if (
+        beautyProfile.sensitivities &&
+        beautyProfile.sensitivities.length > 0 &&
+        !hasSensitivityConflict
+    ) {
+
+        reasons.push(
+            "it does not conflict with your saved ingredient sensitivities"
+        );
+
+    }
+
+
+    // ------------------------------------------
+    // CREATE FINAL ANSWER
+    // ------------------------------------------
+
+    if (reasons.length === 0) {
+
+        return res.status(200).json({
+            reply:
+                `🌸 ${matchedProduct.name} is available in GlowGuide, but I don't have enough matching information to explain a strong personalized recommendation for your current Beauty Profile.`,
+            productName: matchedProduct.name
+        });
+
+    }
+
+
+    const reasonText =
+        reasons
+            .map(
+                (reason) => `• ${reason}`
+            )
+            .join("\n");
+
+
+    return res.status(200).json({
+
+        reply:
+            `🌸 I recommended ${matchedProduct.name} because:\n\n` +
+            `${reasonText}\n\n` +
+            `These reasons are based on your saved GlowGuide Beauty Profile. ✨`,
+
+        productName:
+            matchedProduct.name
+
+    });
+
+}    
 
 
             // ------------------------------------------
@@ -2558,7 +3531,7 @@ if (
             return res.status(200).json({
 
                 reply:
-                    `Here are some products available at GlowNest 🌸\n\n${productList}`
+                    `Here are some products available at GlowGuide 🌸\n\n${productList}`
 
             });
 
