@@ -29,7 +29,302 @@ export async function sendChatMessage(req, res) {
             .toLowerCase()
             .trim();
 
+        // ==================================================
+// PRIORITY GENERAL BEAUTY QUESTIONS
+// Prevent general advice questions from being
+// mistaken for product/category searches
+// ==================================================
 
+const normalizedBeautyQuestion = userMessage
+    .replace(/[?!.,]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+
+// --------------------------------------------------
+// DRY SKIN VS DEHYDRATED SKIN
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "difference between dry skin and dehydrated skin"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "dry skin vs dehydrated skin"
+    )
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 Dry skin and dehydrated skin are different.\n\n" +
+            "Dry skin is a skin type that does not produce enough natural oil, so it may feel rough, flaky or tight.\n\n" +
+            "Dehydrated skin is a temporary condition where the skin lacks water. It can affect any skin type, including oily skin.\n\n" +
+            "Gentle cleansing, hydration and a suitable moisturizer can help support the skin barrier."
+    });
+}
+
+
+// --------------------------------------------------
+// SUNSCREEN USAGE
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "how often should i use sunscreen"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "how often should i apply sunscreen"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "when should i use sunscreen"
+    )
+) {
+
+    return res.status(200).json({
+        reply:
+            "☀️ Sunscreen should be used every morning as the final step of your daytime skincare routine.\n\n" +
+            "Reapply it during the day when needed, especially after swimming, sweating or spending a long time outdoors. 🌸"
+    });
+}
+
+
+// --------------------------------------------------
+// OILY SKIN + MOISTURIZER
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "can oily skin use moisturizer"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "should oily skin use moisturizer"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "does oily skin need moisturizer"
+    )
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 Yes. Oily skin can still benefit from moisturizer.\n\n" +
+            "A lightweight, non-greasy moisturizer can help keep the skin hydrated without making it feel excessively oily."
+    });
+}
+
+
+// --------------------------------------------------
+// BASIC MORNING SKINCARE ROUTINE
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "basic morning skincare routine"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "basic morning skin care routine"
+    )
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌞 A simple morning skincare routine can be:\n\n" +
+            "1. Cleanser\n" +
+            "2. Serum or treatment, if needed\n" +
+            "3. Moisturizer\n" +
+            "4. Sunscreen\n\n" +
+            "This is a general routine. For a routine based on your saved Beauty Profile, you can ask me to create a skincare routine for you. 🌸"
+    });
+}
+
+
+// --------------------------------------------------
+// BASIC NIGHT SKINCARE ROUTINE
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "basic night skincare routine"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "basic night skin care routine"
+    )
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌙 A simple night skincare routine can be:\n\n" +
+            "1. Cleanser\n" +
+            "2. Serum or treatment, if needed\n" +
+            "3. Moisturizer\n\n" +
+            "This is a general routine. For a routine based on your saved Beauty Profile, you can ask me to create a skincare routine for you. 🌸"
+    });
+}
+
+// --------------------------------------------------
+// PURPOSE OF TONER
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "what is the purpose of a toner in skincare"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "what is the purpose of toner"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "what does toner do"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "why use toner"
+    )
+) {
+    return res.status(200).json({
+        reply:
+            "🌸 Toner is a skincare step that can help refresh the skin after cleansing.\n\n" +
+            "Depending on the product, a toner may help add hydration or prepare the skin for the next steps of your routine.\n\n" +
+            "Toner is optional, so you do not need to use one if your basic skincare routine already works well for you."
+    });
+}
+
+
+// --------------------------------------------------
+// AVOID USING TOO MANY SKINCARE PRODUCTS
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "why should i avoid using too many skincare products at once"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "why avoid using too many skincare products"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "too many skincare products"
+    )
+) {
+    return res.status(200).json({
+        reply:
+            "🌸 Using too many skincare products at once can make your routine complicated and may increase the chance of skin irritation.\n\n" +
+            "It can also make it difficult to know which product is helping or causing a problem.\n\n" +
+            "A simple routine with a few suitable products is often easier to follow and maintain."
+    });
+}
+
+
+// --------------------------------------------------
+// KEEP SKINCARE ROUTINE SIMPLE
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion.includes(
+        "how can i keep my skincare routine simple"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "how do i keep my skincare routine simple"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "keep my skincare routine simple"
+    ) ||
+    normalizedBeautyQuestion.includes(
+        "simple skincare routine"
+    )
+) {
+    return res.status(200).json({
+        reply:
+            "🌸 You can keep your skincare routine simple by focusing on the basic steps.\n\n" +
+            "🌞 Morning: Cleanser, moisturizer and sunscreen.\n\n" +
+            "🌙 Night: Cleanser and moisturizer.\n\n" +
+            "You can add a serum or other treatment only when you have a specific skincare need."
+    });
+}
+
+// ==================================================
+// PRIORITY GENERAL BEAUTY KNOWLEDGE
+// These questions must be answered as knowledge,
+// not treated as product searches.
+// ==================================================
+
+// --------------------------------------------------
+// WHAT IS A SERUM?
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion === "what is a serum" ||
+    normalizedBeautyQuestion === "what is serum" ||
+    normalizedBeautyQuestion === "what does a serum do" ||
+    normalizedBeautyQuestion === "what does serum do"
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 A serum is a lightweight skincare product that contains concentrated ingredients designed to target specific skin concerns.\n\n" +
+            "Depending on the ingredients, serums can help with hydration, acne, dullness, uneven skin tone or other skincare needs.\n\n" +
+            "A serum is usually applied after cleansing and before moisturizer."
+    });
+}
+
+
+// --------------------------------------------------
+// WHAT DOES MOISTURIZER DO?
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion === "what does moisturizer do" ||
+    normalizedBeautyQuestion === "what does moisturiser do" ||
+    normalizedBeautyQuestion === "what is a moisturizer" ||
+    normalizedBeautyQuestion === "what is a moisturiser" ||
+    normalizedBeautyQuestion === "why use moisturizer" ||
+    normalizedBeautyQuestion === "why use moisturiser"
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 Moisturizer helps keep the skin hydrated by reducing moisture loss and supporting the skin barrier.\n\n" +
+            "It can help the skin feel softer, smoother and more comfortable.\n\n" +
+            "Moisturizer can be useful for different skin types, including oily skin, although the suitable texture may vary."
+    });
+}
+
+
+// --------------------------------------------------
+// WHY IS SUNSCREEN IMPORTANT?
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion === "why is sunscreen important" ||
+    normalizedBeautyQuestion === "why is sunscreen important for skin" ||
+    normalizedBeautyQuestion === "what does sunscreen do" ||
+    normalizedBeautyQuestion === "why use sunscreen"
+) {
+
+    return res.status(200).json({
+        reply:
+            "☀️ Sunscreen helps protect the skin from harmful ultraviolet (UV) radiation.\n\n" +
+            "Regular sunscreen use can help reduce sunburn and protect against UV-related skin damage and premature skin aging.\n\n" +
+            "For daytime skincare, sunscreen is generally used as the final step of the morning routine. 🌸"
+    });
+}
+
+
+// --------------------------------------------------
+// WHAT CAUSES ACNE?
+// --------------------------------------------------
+
+if (
+    normalizedBeautyQuestion === "what causes acne" ||
+    normalizedBeautyQuestion === "what causes acne?" ||
+    normalizedBeautyQuestion === "why do i get acne" ||
+    normalizedBeautyQuestion === "why do i get pimples" ||
+    normalizedBeautyQuestion === "what causes pimples"
+) {
+
+    return res.status(200).json({
+        reply:
+            "🌸 Acne can develop when hair follicles become clogged with oil (sebum) and dead skin cells.\n\n" +
+            "Bacteria, hormonal changes and increased oil production can also contribute to acne.\n\n" +
+            "A gentle skincare routine and products suitable for your skin type can help support clearer-looking skin. If acne is severe or persistent, it is best to consult a qualified healthcare professional."
+    });
+}
         // ==================================================
         // CUSTOMER BEAUTY PROFILE
         // ==================================================
@@ -417,6 +712,256 @@ const askingForPersonalizedRecommendation =
     askingForSpecificSkincareRecommendation ||
     askingForSkinBasedRecommendation;
 
+ // ==========================================
+// DETECT CURRENT SKIN TYPE / CONCERN
+// FROM THE USER'S CURRENT MESSAGE
+// ==========================================
+
+// These values are used only for the CURRENT
+// recommendation request.
+// They DO NOT change the saved Beauty Profile.
+
+// ==========================================
+// DETECT CURRENT SKIN TYPE / CONCERNS
+// FROM THE USER'S CURRENT MESSAGE
+// ==========================================
+//
+// These values are used only for the CURRENT
+// recommendation request.
+// They DO NOT change the saved Beauty Profile.
+//
+
+const currentSkinType =
+    profileSkinWords.find(
+        (word) => userMessage.includes(word)
+    ) || null;
+
+
+// Detect ALL concerns mentioned in the current message
+const currentSkinConcerns =
+    profileConcernWords.filter(
+        (word) => userMessage.includes(word)
+    );
+
+
+// Keep the first concern available for any
+// existing code that expects currentSkinConcern
+const currentSkinConcern =
+    currentSkinConcerns.length > 0
+        ? currentSkinConcerns[0]
+        : null;
+
+
+console.log(
+    "GlowGuide current message detection:",
+    {
+        currentSkinType,
+        currentSkinConcerns
+    }
+);
+
+// ==========================================
+// DETECT PERSONALIZED ROUTINE REQUESTS
+// ==========================================
+//
+// These must be detected BEFORE the general
+// recommendation logic.
+//
+// Otherwise:
+// "What should I use in the morning?"
+// would be treated as a normal product
+// recommendation because it contains
+// "what should i use".
+//
+// ==========================================
+
+const routineRequestType =
+    userMessage.includes("morning") &&
+    (
+        userMessage.includes("what should i use") ||
+        userMessage.includes("what can i use") ||
+        userMessage.includes("what do i use") ||
+        userMessage.includes("morning routine") ||
+        userMessage.includes("morning skincare") ||
+        userMessage.includes("morning skin care")
+    )
+        ? "morning"
+
+    : userMessage.includes("night") &&
+      (
+          userMessage.includes("what should i use") ||
+          userMessage.includes("what can i use") ||
+          userMessage.includes("what do i use") ||
+          userMessage.includes("night routine") ||
+          userMessage.includes("night skincare") ||
+          userMessage.includes("night skin care") ||
+          userMessage.includes("evening routine")
+      )
+        ? "night"
+
+    : (
+        userMessage.includes("create a routine") ||
+        userMessage.includes("create my routine") ||
+        userMessage.includes("make a routine") ||
+        userMessage.includes("make my routine") ||
+        userMessage.includes("build a routine") ||
+        userMessage.includes("build my routine") ||
+        userMessage.includes("give me a routine") ||
+        userMessage.includes("give me my routine") ||
+        userMessage.includes("create a skincare routine") ||
+        userMessage.includes("create a skin care routine") ||
+        userMessage.includes("create my skincare routine") ||
+        userMessage.includes("create my skin care routine") ||
+        userMessage.includes("make a skincare routine") ||
+        userMessage.includes("make a skin care routine") ||
+        userMessage.includes("my skincare routine") ||
+        userMessage.includes("my skin care routine")
+    )
+        ? "full"
+        : null;
+
+
+const isPersonalizedRoutineRequest =
+    routineRequestType !== null;
+
+
+console.log(
+    "GlowGuide routine request detection:",
+    {
+        routineRequestType,
+        isPersonalizedRoutineRequest
+    }
+);
+
+
+// ==========================================
+// DETECT RECOMMENDATION REQUESTS SUCH AS:
+//
+// "I have acne, what should I use?"
+// "I have sensitive skin and acne"
+// "What should I use for oily skin?"
+// ==========================================
+
+// ==========================================
+// DETECT EXPLICIT RECOMMENDATION REQUESTS
+// ==========================================
+//
+// Examples:
+// "What should I use for oily skin?"
+// "Recommend something for acne"
+// "What do you recommend for sensitive skin?"
+//
+
+const currentNeedRecommendation =
+    (
+        userMessage.includes("what should i use") ||
+        userMessage.includes("what should i try") ||
+        userMessage.includes("what can i use") ||
+        userMessage.includes("what do you recommend") ||
+        userMessage.includes("what would you recommend") ||
+        userMessage.includes("what product should i use") ||
+        userMessage.includes("what products should i use")
+    ) &&
+    (
+        mentionsSkinType ||
+        mentionsSkinConcern
+    );
+
+
+// ==========================================
+// DETECT DIRECT RECOMMENDATION REQUESTS
+// ==========================================
+//
+// Examples:
+// "Recommend something for oily skin"
+// "Suggest a product for acne"
+// "Help me find something for dry skin"
+//
+
+const directCurrentNeedRecommendation =
+    (
+        mentionsSkinType ||
+        mentionsSkinConcern
+    ) &&
+    (
+        userMessage.includes("recommend") ||
+        userMessage.includes("suggest") ||
+        userMessage.includes("help me") ||
+        userMessage.includes("find me")
+    );
+
+
+// ==========================================
+// DETECT IMPLICIT PERSONALIZED REQUEST
+// ==========================================
+//
+// Examples:
+// "I have sensitive skin and acne"
+// "I have oily skin"
+// "My skin is dry and I have dark spots"
+// "My skin type is sensitive and I have redness"
+//
+// These messages do not explicitly say
+// "recommend", but clearly describe the
+// customer's own skin situation.
+//
+
+const personalSkinStatementPatterns = [
+    "i have",
+    "i've got",
+    "ive got",
+    "my skin is",
+    "my skin type is",
+    "my skin has",
+    "i suffer from",
+    "i struggle with",
+    "i'm dealing with",
+    "im dealing with"
+];
+
+
+const isPersonalSkinStatement =
+    personalSkinStatementPatterns.some(
+        (pattern) =>
+            userMessage.includes(pattern)
+    );
+
+
+// A personalized request is triggered when the
+// customer describes their own skin AND mentions
+// a skin type or skin concern.
+const implicitPersonalizedRecommendation =
+    isPersonalSkinStatement &&
+    (
+        mentionsSkinType ||
+        mentionsSkinConcern
+    );
+
+
+// ==========================================
+// FINAL PERSONALIZED RECOMMENDATION FLAG
+// ==========================================
+
+const shouldUsePersonalizedRecommendation =
+    !isPersonalizedRoutineRequest &&
+    (
+        askingForPersonalizedRecommendation ||
+        currentNeedRecommendation ||
+        directCurrentNeedRecommendation ||
+        implicitPersonalizedRecommendation
+    );
+
+console.log(
+    "GlowGuide recommendation detection:",
+    {
+        askingForPersonalizedRecommendation,
+        currentNeedRecommendation,
+        directCurrentNeedRecommendation,
+        implicitPersonalizedRecommendation,
+        shouldUsePersonalizedRecommendation
+    }
+);   
+
 // ==========================================
 // DETECT "RECOMMEND WITHOUT INGREDIENT"
 // Example:
@@ -493,8 +1038,20 @@ const explanationPatterns = [
     /why did you recommend/i,
     /why did you recommend this/i,
     /why did you recommend it/i,
+
+    /why would you recommend/i,
+    /why would you recommend this/i,
+    /why would you recommend it/i,
+
+    /why do you recommend/i,
+    /why do you recommend this/i,
+    /why do you recommend it/i,
+
+    /why are you recommending/i,
     /why this product/i,
+    /why this one/i,
     /why is this suitable/i,
+    /why is it suitable/i,
     /why is this good for me/i,
     /why did you choose/i,
     /explain this recommendation/i,
@@ -903,7 +1460,7 @@ if (ingredients.length === 0) {
 }
 
 
-        if (askingForPersonalizedRecommendation) {
+        if (shouldUsePersonalizedRecommendation) {
 
             console.log(
                 "GlowGuide detected personalized recommendation request"
@@ -948,22 +1505,98 @@ if (ingredients.length === 0) {
 
 
             const {
-                skinType,
-                skinConcerns = [],
-                budget,
-                sensitivities = []
-            } = beautyProfile;
+    skinType: savedSkinType,
+    skinConcerns: savedSkinConcerns = [],
+    budget,
+    sensitivities = []
+} = beautyProfile;
+
+
+// ==========================================
+// TEMPORARY VALUES FOR CURRENT REQUEST
+//
+// These DO NOT modify beautyProfile.
+// ==========================================
+
+let recommendationSkinType =
+    savedSkinType;
+
+let recommendationSkinConcerns =
+    [...savedSkinConcerns];
+
+
+// ==========================================
+// USE CURRENT MESSAGE SKIN TYPE
+// WHEN THE USER SPECIFIES ONE
+// ==========================================
+
+if (currentSkinType) {
+
+    recommendationSkinType =
+        currentSkinType
+            .replace(" skin", "")
+            .trim();
+
+}
+
+
+// ==========================================
+// USE CURRENT MESSAGE CONCERN
+// WHEN THE USER SPECIFIES ONE
+// ==========================================
+
+// ==========================================
+// USE ALL CURRENT MESSAGE CONCERNS
+// ==========================================
+//
+// Example:
+// "I have sensitive skin, acne and dark spots"
+//
+// This will use:
+// acne
+// dark spots
+//
+// The saved Beauty Profile is NOT modified.
+//
+
+if (currentSkinConcerns.length > 0) {
+
+    recommendationSkinConcerns =
+        currentSkinConcerns.map(
+            (concern) =>
+                String(concern)
+                    .toLowerCase()
+                    .trim()
+        );
+
+}
+
+// ==========================================
+// DEBUG
+// ==========================================
+
+console.log(
+    "GlowGuide recommendation values:",
+    {
+        savedSkinType,
+        savedSkinConcerns,
+        recommendationSkinType,
+        recommendationSkinConcerns,
+        budget,
+        sensitivities
+    }
+);
 
 
             console.log(
-                "GlowGuide personalized recommendation profile:",
-                {
-                    skinType,
-                    skinConcerns,
-                    budget,
-                    sensitivities
-                }
-            );
+    "GlowGuide personalized recommendation profile:",
+    {
+        skinType: recommendationSkinType,
+        skinConcerns: recommendationSkinConcerns,
+        budget,
+        sensitivities
+    }
+);
 
 
             // ------------------------------------------
@@ -1170,79 +1803,78 @@ if (askingWithinBudget && budget) {
 
 
                 if (
-                    skinType &&
-                    supportedSkinTypes.includes(
-                        skinType
-                            .toLowerCase()
-                            .trim()
-                    )
-                ) {
+    recommendationSkinType &&
+    supportedSkinTypes.includes(
+        recommendationSkinType
+            .toLowerCase()
+            .trim()
+    )
+) {
 
-                    score += 30;
+    score += 30;
 
-                    reasons.push(
-                        `Suitable for ${skinType} skin`
-                    );
+    reasons.push(
+        `Suitable for ${recommendationSkinType} skin`
+    );
 
-                }
+}
 
 
                 // ------------------------------------------
-                // SKIN CONCERN SCORE = 30
-                // ------------------------------------------
+// SKIN CONCERN SCORE = 30
+// ------------------------------------------
 
-                const productConcerns =
-                    Array.isArray(
-                        recommendation.skinConcerns
-                    )
-                        ? recommendation.skinConcerns
-                        : [];
-
-
-                const matchedConcerns =
-                    skinConcerns.filter(
-                        (concern) =>
-
-                            productConcerns.some(
-                                (productConcern) =>
-
-                                    String(productConcern)
-                                        .toLowerCase()
-                                        .trim() ===
-
-                                    String(concern)
-                                        .toLowerCase()
-                                        .trim()
-                            )
-                    );
+const productConcerns =
+    Array.isArray(
+        recommendation.skinConcerns
+    )
+        ? recommendation.skinConcerns
+        : [];
 
 
-                if (
-                    skinConcerns.length > 0
-                ) {
+const matchedConcerns =
+    recommendationSkinConcerns.filter(
+        (concern) =>
 
-                    const concernScore =
-                        (
-                            matchedConcerns.length /
-                            skinConcerns.length
-                        ) * 30;
+            productConcerns.some(
+                (productConcern) =>
+
+                    String(productConcern)
+                        .toLowerCase()
+                        .trim() ===
+
+                    String(concern)
+                        .toLowerCase()
+                        .trim()
+            )
+    );
 
 
-                    score += concernScore;
+if (
+    recommendationSkinConcerns.length > 0
+) {
+
+    const concernScore =
+        (
+            matchedConcerns.length /
+            recommendationSkinConcerns.length
+        ) * 30;
 
 
-                    if (
-                        matchedConcerns.length > 0
-                    ) {
+    score += concernScore;
 
-                        reasons.push(
-                            `Supports ${matchedConcerns.join(", ")}`
-                        );
 
-                    }
+    if (
+        matchedConcerns.length > 0
+    ) {
 
-                }
+        reasons.push(
+            `Supports ${matchedConcerns.join(", ")}`
+        );
 
+    }
+
+}
 
                 // ------------------------------------------
                 // BUDGET SCORE = 15
@@ -1471,9 +2103,9 @@ if (askingWithinBudget && budget) {
             // ------------------------------------------
 
             const concernText =
-                skinConcerns.length > 0
-                    ? skinConcerns.join(", ")
-                    : "your general skin needs";
+    recommendationSkinConcerns.length > 0
+        ? recommendationSkinConcerns.join(", ")
+        : "your general skin needs";
 
 
             const sensitivityText =
@@ -1490,11 +2122,11 @@ if (askingWithinBudget && budget) {
 
                 reply:
 
-                    `🌸 Based on your saved GlowGuide Beauty Profile, these are my top recommendations:\n\n` +
+                    `🌸 Based on your current request and saved GlowGuide preferences, these are my top recommendations:\n\n` +
 
                     `${productText}\n\n` +
 
-                    `I considered your ${skinType} skin, ` +
+                    `I considered your ${recommendationSkinType} skin, ` +
 
                     `${concernText}, ` +
 
@@ -1536,9 +2168,10 @@ if (askingWithinBudget && budget) {
         // ==================================================
 
         const products =
-            await Product.find({
-                isAvailable: true
-            });
+    await Product.find({
+        isAvailable: true,
+        stock: { $gt: 0 }
+    });
 
 
         console.log(
@@ -1627,31 +2260,36 @@ if (askingWithinBudget && budget) {
 
         }
 
-        // ==================================================
-// 6.5 PERSONALIZED SKINCARE ROUTINE
-// ==================================================
+       // ==========================================
+// DETECT EXPLICIT PERSONALIZED ROUTINE REQUEST
+// ==========================================
 
-const skincareRoutinePatterns = [
-    "create a skincare routine for me",
-    "create skincare routine for me",
-    "create my skincare routine",
-    "make a skincare routine for me",
-    "make me a skincare routine",
-    "give me a skincare routine",
-    "what skincare routine should i use",
-    "what skin care routine should i use",
-    "skincare routine for me",
-    "skin care routine for me",
-    "my skincare routine",
-    "my skin care routine"
-];
+// Only trigger the personalized routine generator
+// when the customer clearly asks GlowGuide to CREATE,
+// GIVE, MAKE or BUILD a routine for them.
+
+// ==========================================
+// PERSONALIZED ROUTINE REQUEST
+// ==========================================
+//
+// Routine intent was already detected earlier,
+// before the recommendation system.
+//
+// Reuse that result here so the existing
+// routine-generation code can handle it.
+//
 
 const askingForSkincareRoutine =
-    skincareRoutinePatterns.some(
-        (pattern) =>
-            userMessage.includes(pattern)
-    );
+    isPersonalizedRoutineRequest;
 
+
+console.log(
+    "GlowGuide personalized routine handler:",
+    {
+        askingForSkincareRoutine,
+        routineRequestType
+    }
+);
 if (askingForSkincareRoutine) {
 
     console.log(
@@ -2277,81 +2915,106 @@ console.log(
     // SEND ROUTINE
     // ------------------------------------------
 
-    return res.status(200).json({
-    reply:
-        `🌸 Here is your personalized GlowGuide skincare routine.\n\n` +
+    // ------------------------------------------
+// CREATE ROUTINE DISPLAY TEXT
+// ------------------------------------------
 
+const morningRoutineText =
+    `🌞 MORNING ROUTINE\n` +
+    `1. Cleanser - ${
+        safeRoutineCleanser
+            ? safeRoutineCleanser.name
+            : "No suitable cleanser currently available"
+    }\n` +
+    `2. Serum - ${
+        safeRoutineSerum
+            ? safeRoutineSerum.name
+            : "No suitable serum currently available"
+    }\n` +
+    `3. Moisturizer - ${
+        safeRoutineMoisturizer
+            ? safeRoutineMoisturizer.name
+            : "No suitable moisturizer currently available"
+    }\n` +
+    `4. Sunscreen - ${
+        safeRoutineSunscreen
+            ? safeRoutineSunscreen.name
+            : "No suitable sunscreen currently available"
+    }`;
+
+    
+const nightRoutineText =
+    `🌙 NIGHT ROUTINE\n` +
+    `1. Cleanser - ${
+        safeRoutineCleanser
+            ? safeRoutineCleanser.name
+            : "No suitable cleanser currently available"
+    }\n` +
+    `2. Serum - ${
+        safeRoutineSerum
+            ? safeRoutineSerum.name
+            : "No suitable serum currently available"
+    }\n` +
+    `3. Moisturizer - ${
+        safeRoutineMoisturizer
+            ? safeRoutineMoisturizer.name
+            : "No suitable moisturizer currently available"
+    }`;
+
+
+// ------------------------------------------
+// SELECT RESPONSE BASED ON REQUEST
+// ------------------------------------------
+
+let routineReply;
+
+
+if (routineRequestType === "morning") {
+
+    routineReply =
+        `🌸 Here is your personalized GlowGuide morning routine.\n\n` +
         `💗 YOUR BEAUTY PROFILE\n` +
         `Skin Type: ${routineSkinType}\n` +
         `Skin Concerns: ${routineConcernText}\n` +
         `Ingredient Sensitivities: ${routineSensitivityText}\n\n` +
+        `${morningRoutineText}\n\n` +
+        `✨ These recommendations are based on your saved Beauty Profile and the products currently available in GlowGuide.`;
 
-        ` 🌞 MORNING ROUTINE\n` +
-`1. Cleanser - ${
-    safeRoutineCleanser
-        ? safeRoutineCleanser.name
-        : "No suitable cleanser currently available"
-}\n` +
-`2. Serum - ${
-    safeRoutineSerum
-        ? safeRoutineSerum.name
-        : "No suitable serum currently available"
-}\n` +
-`3. Moisturizer - ${
-    safeRoutineMoisturizer
-        ? safeRoutineMoisturizer.name
-        : "No suitable moisturizer currently available"
-}\n` +
-`4. Sunscreen - ${
-    safeRoutineSunscreen
-        ? safeRoutineSunscreen.name
-        : "No suitable sunscreen currently available"
-}\n\n` +
+}
 
-        `🛍️ RECOMMENDED PRODUCTS\n\n` +
 
-        `🧼 Cleanser: ${
-            safeRoutineCleanser
-                ? `${safeRoutineCleanser.name} - Rs. ${safeRoutineCleanser.price}`
-                : "No suitable cleanser is currently available"
-        }\n` +
+else if (routineRequestType === "night") {
 
-        `💧 Serum: ${
-            safeRoutineSerum
-                ? `${safeRoutineSerum.name} - Rs. ${safeRoutineSerum.price}`
-                : "No suitable serum is currently available"
-        }\n` +
+    routineReply =
+        `🌸 Here is your personalized GlowGuide night routine.\n\n` +
+        `💗 YOUR BEAUTY PROFILE\n` +
+        `Skin Type: ${routineSkinType}\n` +
+        `Skin Concerns: ${routineConcernText}\n` +
+        `Ingredient Sensitivities: ${routineSensitivityText}\n\n` +
+        `${nightRoutineText}\n\n` +
+        `✨ These recommendations are based on your saved Beauty Profile and the products currently available in GlowGuide.`;
 
-        `🧴 Moisturizer: ${
-            safeRoutineMoisturizer
-                ? `${safeRoutineMoisturizer.name} - Rs. ${safeRoutineMoisturizer.price}`
-                : "No suitable moisturizer is currently available"
-        }\n` +
+}
 
-        `☀️ Sunscreen: ${
-            safeRoutineSunscreen
-                ? `${safeRoutineSunscreen.name} - Rs. ${safeRoutineSunscreen.price}`
-                : "No suitable sunscreen is currently available"
-        }\n\n` +
 
-        ` 🌙 NIGHT ROUTINE\n` +
-`1. Cleanser - ${
-    safeRoutineCleanser
-        ? safeRoutineCleanser.name
-        : "No suitable cleanser currently available"
-}\n` +
-`2. Serum - ${
-    safeRoutineSerum
-        ? safeRoutineSerum.name
-        : "No suitable serum currently available"
-}\n` +
-`3. Moisturizer - ${
-    safeRoutineMoisturizer
-        ? safeRoutineMoisturizer.name
-        : "No suitable moisturizer currently available"
-}\n\n` +
+else {
 
-        `✨ These recommendations are based on your saved Beauty Profile and the products currently available in GlowGuide. Introduce new products carefully because individual skin can react differently.`,
+    routineReply =
+        `🌸 Here is your personalized GlowGuide skincare routine.\n\n` +
+        `💗 YOUR BEAUTY PROFILE\n` +
+        `Skin Type: ${routineSkinType}\n` +
+        `Skin Concerns: ${routineConcernText}\n` +
+        `Ingredient Sensitivities: ${routineSensitivityText}\n\n` +
+        `${morningRoutineText}\n\n` +
+        `${nightRoutineText}\n\n` +
+        `✨ These recommendations are based on your saved Beauty Profile and the products currently available in GlowGuide.`;
+
+}
+
+
+return res.status(200).json({
+
+    reply: routineReply,
 
     routineProducts: {
         cleanser: safeRoutineCleanser || null,
@@ -2359,9 +3022,9 @@ console.log(
         moisturizer: safeRoutineMoisturizer || null,
         sunscreen: safeRoutineSunscreen || null
     }
+
 });
 }
-
 
         // ==================================================
         // 7. CATEGORY SEARCH
@@ -2485,7 +3148,10 @@ console.log(
             );
 
 
-        if (askingForRecommendation) {
+        if (
+    askingForRecommendation &&
+    !askingForRecommendationExplanation
+) {
 
             // ------------------------------------------
             // Detect skin type
@@ -2914,48 +3580,56 @@ if (
 }
 
 
-        // ==================================================
-        // 9. BEAUTY KNOWLEDGE
-        // ==================================================
-
-        const matchedKnowledge =
-            beautyKnowledge.find(
-                (item) => {
-
-                    return item.keywords.some(
-                        (keyword) =>
-
-                            userMessage.includes(
-                                keyword.toLowerCase()
-                            )
-                    );
-
-                }
-            );
-
-
-        if (matchedKnowledge) {
-
-            console.log(
-                "GlowGuide beauty knowledge match:",
-                matchedKnowledge.keywords[0]
-            );
-
-
-            return res.status(200).json({
-
-                reply:
-                    matchedKnowledge.answer
-
-            });
-
-        }
-
+        
 
         // ==================================================
         // 10. FIND AN EXPLICITLY MENTIONED PRODUCT
         // ==================================================
 
+        // ==================================================
+// ==================================================
+// DETECT DIRECT PRODUCT-DETAIL REQUEST
+// ==================================================
+
+const productDetailRequestPatterns = [
+    /^tell me about the\s+(.+)$/i,
+    /^tell me about\s+(.+)$/i,
+    /^give me details about\s+(.+)$/i,
+    /^give me information about\s+(.+)$/i
+];
+
+let requestedProductText = null;
+
+// Only treat these as DIRECT product-detail requests.
+// Price and stock questions are handled later after
+// GlowGuide finds the product name inside the message.
+
+const isPriceOrStockQuestion =
+    userMessage.includes("price") ||
+    userMessage.includes("cost") ||
+    userMessage.includes("how much") ||
+    userMessage.includes("stock") ||
+    userMessage.includes("available") ||
+    userMessage.includes("availability");
+
+if (!isPriceOrStockQuestion) {
+
+    for (const pattern of productDetailRequestPatterns) {
+
+        const match = message.trim().match(pattern);
+
+        if (match && match[1]) {
+
+            requestedProductText = match[1]
+                .toLowerCase()
+                .replace(/[?!.,]+$/g, "")
+                .trim();
+
+            break;
+        }
+    }
+}
+        
         let matchedProduct = null;
 
 
@@ -3032,6 +3706,115 @@ if (
                 }
             );
 
+         // ==================================================
+// VERIFY DIRECT PRODUCT-DETAIL REQUEST
+// Prevent GlowGuide from returning a random/partial product
+// when the requested product does not exist
+// ==================================================
+
+if (requestedProductText) {
+
+    let exactRequestedProduct =
+        products.find((product) => {
+
+            if (!product || !product.name) {
+                return false;
+            }
+
+            const productName =
+                String(product.name)
+                    .toLowerCase()
+                    .trim();
+
+            if (productName === requestedProductText) {
+                return true;
+            }
+
+            const alternativeNames =
+                Array.isArray(product.altNames)
+                    ? product.altNames
+                    : [];
+
+            return alternativeNames.some((altName) => {
+
+                if (!altName) {
+                    return false;
+                }
+
+                return (
+                    String(altName)
+                        .toLowerCase()
+                        .trim() ===
+                    requestedProductText
+                );
+            });
+        });
+    // ------------------------------------------
+// HANDLE PRODUCT PRONOUNS USING LAST PRODUCT
+// ------------------------------------------
+
+const productPronouns = [
+    "it",
+    "this",
+    "that",
+    "this product",
+    "that product",
+    "the product"
+];
+
+const isProductPronoun =
+    productPronouns.includes(
+        String(requestedProductText)
+            .toLowerCase()
+            .trim()
+    );
+
+if (
+    !exactRequestedProduct &&
+    isProductPronoun &&
+    lastProduct &&
+    String(lastProduct).trim() !== ""
+) {
+
+    console.log(
+        "GlowGuide resolving product pronoun to:",
+        lastProduct
+    );
+
+    exactRequestedProduct =
+        products.find((product) => {
+
+            if (!product.name) {
+                return false;
+            }
+
+            return (
+                product.name
+                    .toLowerCase()
+                    .trim() ===
+                String(lastProduct)
+                    .toLowerCase()
+                    .trim()
+            );
+        });
+}    
+
+    if (!exactRequestedProduct) {
+
+        console.log(
+            "GlowGuide requested product does not exist:",
+            requestedProductText
+        );
+
+        return res.status(200).json({
+            reply:
+                `🌸 I couldn't find "${requestedProductText}" in the GlowGuide product catalogue.\n\n` +
+                `I don't want to give you information about a different product by mistake. You can ask me to show the products currently available in GlowGuide.`
+        });
+    }
+
+    matchedProduct = exactRequestedProduct;
+}   
 
         // ==================================================
         // 11. BASIC CONVERSATION MEMORY / CONTEXT
@@ -3104,7 +3887,77 @@ console.log(
 );
 console.log("================================");
 
+        // ==================================================
+// UNKNOWN PRODUCT REQUEST PROTECTION
+// Prevent unknown product questions from reaching AI
+// ==================================================
 
+const productAvailabilityPatterns = [
+    /do you have (.+)/i,
+    /have you got (.+)/i,
+    /is (.+) available/i,
+    /is there (.+)/i,
+    /can i buy (.+)/i,
+    /do you sell (.+)/i,
+    /looking for (.+)/i
+];
+
+let requestedProductFromAvailability = null;
+
+for (const pattern of productAvailabilityPatterns) {
+
+    const match = userMessage.match(pattern);
+
+    if (match && match[1]) {
+
+        requestedProductFromAvailability = match[1]
+            .replace(/[?!.,]+$/g, "")
+            .trim();
+
+        break;
+    }
+}
+
+
+// --------------------------------------------------
+// REMOVE COMMON PRODUCT WORDS
+// Example:
+// "vitamin c serum"
+// "xyz product"
+// --------------------------------------------------
+
+if (requestedProductFromAvailability) {
+
+    requestedProductFromAvailability =
+        requestedProductFromAvailability
+            .replace(/\bproduct\b$/i, "")
+            .trim();
+}
+
+
+// --------------------------------------------------
+// IF USER IS CLEARLY ASKING ABOUT A PRODUCT
+// BUT NO PRODUCT WAS FOUND
+// --------------------------------------------------
+
+if (
+    requestedProductFromAvailability &&
+    !matchedProduct
+) {
+
+    console.log(
+        "GlowGuide unknown product request:",
+        requestedProductFromAvailability
+    );
+
+    return res.status(200).json({
+
+        reply:
+            `🌸 Sorry, I couldn't find "${requestedProductFromAvailability}" in the GlowGuide product catalogue.\n\n` +
+            `Please check the product name or ask me to show you the products currently available in GlowGuide. 💗`
+
+    });
+}
         // ==================================================
         // 12. CUSTOMER IS ASKING ABOUT PRODUCT
         // ==================================================
@@ -3452,6 +4305,94 @@ if (askingWhyRecommended) {
 
             }
 
+            // ------------------------------------------
+// RECOMMENDATION EXPLANATION
+// ------------------------------------------
+
+if (askingForRecommendationExplanation) {
+
+    const recommendationRecord =
+        await RecommendationData.findOne({
+            productId: matchedProduct.productId
+        });
+
+    const reasons = [];
+
+    // Skin type
+    if (
+        beautyProfile?.skinType &&
+        recommendationRecord?.skinTypes?.some(
+            (type) =>
+                type.toLowerCase() ===
+                beautyProfile.skinType.toLowerCase()
+        )
+    ) {
+        reasons.push(
+            `it is suitable for your ${beautyProfile.skinType} skin`
+        );
+    }
+
+    // Skin concerns
+    if (
+        beautyProfile?.skinConcerns &&
+        recommendationRecord?.skinConcerns
+    ) {
+        const matchedConcerns =
+            beautyProfile.skinConcerns.filter(
+                (concern) =>
+                    recommendationRecord.skinConcerns.some(
+                        (item) =>
+                            item.toLowerCase() ===
+                            concern.toLowerCase()
+                    )
+            );
+
+        if (matchedConcerns.length > 0) {
+            reasons.push(
+                `it supports your ${matchedConcerns.join(", ")} concern`
+            );
+        }
+    }
+
+    // Budget
+    if (
+        beautyProfile?.budget &&
+        recommendationRecord?.budgetLevel &&
+        recommendationRecord.budgetLevel
+            .toLowerCase() ===
+        beautyProfile.budget.toLowerCase()
+    ) {
+        reasons.push(
+            `it matches your ${beautyProfile.budget} budget preference`
+        );
+    }
+
+    // Ingredient sensitivity
+    if (
+        beautyProfile?.sensitivities?.length > 0
+    ) {
+        reasons.push(
+            "it does not conflict with your saved ingredient sensitivities"
+        );
+    }
+
+    if (reasons.length > 0) {
+
+        return res.status(200).json({
+
+            reply:
+                `🌸 I recommended ${matchedProduct.name} because:\n\n` +
+                reasons
+                    .map((reason) => `• ${reason}`)
+                    .join("\n") +
+                `\n\nThese reasons are based on your saved GlowGuide Beauty Profile. ✨`,
+
+            productName:
+                matchedProduct.name
+        });
+    }
+}
+
 
             // ------------------------------------------
             // GENERAL PRODUCT QUESTION
@@ -3536,6 +4477,44 @@ if (askingWhyRecommended) {
             });
 
         }
+
+        // ==================================================
+        // 14. BEAUTY KNOWLEDGE
+        // ==================================================
+
+        const matchedKnowledge =
+            beautyKnowledge.find(
+                (item) => {
+
+                    return item.keywords.some(
+                        (keyword) =>
+
+                            userMessage.includes(
+                                keyword.toLowerCase()
+                            )
+                    );
+
+                }
+            );
+
+
+        if (matchedKnowledge) {
+
+            console.log(
+                "GlowGuide beauty knowledge match:",
+                matchedKnowledge.keywords[0]
+            );
+
+
+            return res.status(200).json({
+
+                reply:
+                    matchedKnowledge.answer
+
+            });
+
+        }
+
 
         // ==========================================================
 // GLOWGUIDE IDENTITY QUESTIONS
@@ -3780,9 +4759,54 @@ aiReply = aiReply
     .replace(/`/g, "")
     .trim();
 
+    // ------------------------------------------
+// CONTROL GEMMA FALLBACK RESPONSE
+// ------------------------------------------
+
+const invalidOrOutOfScopePatterns = [
+    /^[^a-zA-Z]*$/,
+    /president/i,
+    /prime minister/i,
+    /politics/i,
+    /government/i,
+    /fly to the moon/i,
+    /moon/i,
+    /football/i,
+    /cricket/i,
+    /weather/i,
+    /capital of/i,
+    /history/i
+];
+
+const looksLikeGibberish =
+    /^[a-z]{7,}$/i.test(message.trim()) ||
+    /^(blah|xyz|abc|asdf|qwerty)/i.test(message.trim());
+
+const isOutOfScope =
+    invalidOrOutOfScopePatterns.some((pattern) =>
+        pattern.test(message)
+    );
+
+if (looksLikeGibberish || isOutOfScope) {
+
     return res.status(200).json({
-        reply: aiReply
+        reply:
+            "🌸 Sorry, I didn't understand that request.\n\n" +
+            "I'm GlowGuide AI, your personal beauty assistant. I can help you with:\n\n" +
+            "• GlowGuide products\n" +
+            "• Personalized product recommendations\n" +
+            "• Your Beauty Profile\n" +
+            "• Ingredients and sensitivities\n" +
+            "• Skincare routines\n" +
+            "• Product prices and availability\n\n" +
+            "Try asking me something about beauty or a GlowGuide product. 💗"
     });
+
+}
+
+return res.status(200).json({
+    reply: aiReply
+});
 
 
 } catch (aiError) {
