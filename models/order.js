@@ -75,7 +75,29 @@ const orderSchema = mongoose.Schema({
     date : {
         type : Date,
         default : Date.now
+    },
+    delivery : {
+    courier : {
+        type : String,
+        default : ""
+    },
+
+    trackingNumber : {
+        type : String,
+        default : ""
+    },
+
+    deliveryStatus : {
+        type : String,
+        default : "not_assigned"
+    },
+
+    updatedAt : {
+        type : Date,
+        default : null
     }
+}
+
 })
 
 const Order = mongoose.model("orders", orderSchema)

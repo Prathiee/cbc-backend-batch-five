@@ -143,3 +143,55 @@ export async function updateOrderStatus(req,res) {
     }
     
 }
+
+export async function updateDeliveryInfo(req, res) {
+
+    if (!isAdmin(req)) {
+        res.status(403).json({
+            message: "You are not authorized to update delivery information",
+        });
+        return;
+    }
+
+    try {
+
+        const orderId = req.params.orderId;
+
+        const {
+            courier,
+            trackingNumber,
+            deliveryStatus
+        } = req.body;
+
+        const order = await Order.findOne({ orderId: orderId });
+
+        if (!order) {
+            res.status(404).json({
+                message: "Order not found",
+            });
+            return;
+        }
+
+        order.delivery = {
+            courier: courier || "",
+            trackingNumber: trackingNumber || "",
+            deliveryStatus: deliveryStatus || "not_assigned",
+            updatedAt: new Date()
+        };
+
+        await order.save();
+
+        res.json({
+            message: "Delivery information updated successfully",
+            order: order
+        });
+
+    } catch (e) {
+
+        res.status(500).json({
+            message: "Failed to update delivery information",
+            error: e,
+        });
+
+    }
+}
