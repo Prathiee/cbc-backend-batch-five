@@ -4,6 +4,275 @@ import beautyKnowledge from "../data/beautyKnowledge.js";
 import RecommendationData from "../models/recommendationData.js";
 import axios from "axios";
 
+normalizeProductText()
+findBestProductMatch()
+
+// ==================================================
+// GLOWGUIDE PRODUCT MATCHING ENGINE
+// ==================================================
+// This function identifies the most accurate product
+// from the user's message.
+//
+// Priority:
+// 1. Exact product name
+// 2. Exact alternative name
+// 3. Longest product-name match
+// 4. Longest alternative-name match
+//
+// This prevents a shorter product name from winning
+// over a more specific product name.
+// ==================================================
+
+function normalizeProductText(text) {
+
+    return String(text || "")
+        .toLowerCase()
+        .replace(/[^\w\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+}
+
+
+function findBestProductMatch(
+    userText,
+    products = []
+) {
+
+    const normalizedMessage =
+        normalizeProductText(userText);
+
+
+    if (
+        !normalizedMessage ||
+        !Array.isArray(products) ||
+        products.length === 0
+    ) {
+        return null;
+    }
+
+
+    const matches = [];
+
+
+    products.forEach((product) => {
+
+        if (
+            !product ||
+            !product.name
+        ) {
+            return;
+        }
+
+
+        const normalizedProductName =
+            normalizeProductText(
+                product.name
+            );
+
+
+        if (!normalizedProductName) {
+            return;
+        }
+
+
+        // ==========================================
+        // 1. EXACT PRODUCT NAME
+        // ==========================================
+
+        if (
+            normalizedMessage ===
+            normalizedProductName
+        ) {
+
+            matches.push({
+                product,
+                score: 100000,
+                matchedName:
+                    product.name,
+                matchType:
+                    "EXACT PRODUCT NAME"
+            });
+
+        }
+
+
+        // ==========================================
+        // 2. PRODUCT NAME INSIDE USER MESSAGE
+        // ==========================================
+
+        if (
+            normalizedMessage.includes(
+                normalizedProductName
+            )
+        ) {
+
+            matches.push({
+                product,
+                score:
+                    50000 +
+                    normalizedProductName.length * 100,
+                matchedName:
+                    product.name,
+                matchType:
+                    "PRODUCT NAME"
+            });
+
+        }
+
+
+        // ==========================================
+        // 3. ALTERNATIVE PRODUCT NAMES
+        // ==========================================
+
+        if (
+            Array.isArray(product.altNames)
+        ) {
+
+            product.altNames.forEach(
+                (altName) => {
+
+                    if (!altName) {
+                        return;
+                    }
+
+
+                    const normalizedAltName =
+                        normalizeProductText(
+                            altName
+                        );
+
+
+                    if (!normalizedAltName) {
+                        return;
+                    }
+
+
+                    // --------------------------------
+                    // EXACT ALTERNATIVE NAME
+                    // --------------------------------
+
+                    if (
+                        normalizedMessage ===
+                        normalizedAltName
+                    ) {
+
+                        matches.push({
+                            product,
+                            score: 90000,
+                            matchedName:
+                                altName,
+                            matchType:
+                                "EXACT ALTERNATIVE NAME"
+                        });
+
+                    }
+
+
+                    // --------------------------------
+                    // ALTERNATIVE NAME IN MESSAGE
+                    // --------------------------------
+
+                    if (
+                        normalizedMessage.includes(
+                            normalizedAltName
+                        )
+                    ) {
+
+                        matches.push({
+                            product,
+                            score:
+                                40000 +
+                                normalizedAltName.length * 100,
+                            matchedName:
+                                altName,
+                            matchType:
+                                "ALTERNATIVE NAME"
+                        });
+
+                    }
+
+                }
+            );
+
+        }
+
+    });
+
+
+    // ==========================================
+    // NO MATCH
+    // ==========================================
+
+    if (
+        matches.length === 0
+    ) {
+
+        return null;
+
+    }
+
+
+    // ==========================================
+    // SORT BEST MATCH FIRST
+    // ==========================================
+
+    matches.sort(
+        (a, b) =>
+            b.score - a.score
+    );
+
+
+    const bestMatch =
+        matches[0];
+
+
+    // ==========================================
+    // DEBUG INFORMATION
+    // ==========================================
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log(
+        "GlowGuide Product Matching"
+    );
+
+    console.log(
+        "User message:",
+        userText
+    );
+
+    console.log(
+        "Selected product:",
+        bestMatch.product.name
+    );
+
+    console.log(
+        "Matched using:",
+        bestMatch.matchType
+    );
+
+    console.log(
+        "Matched text:",
+        bestMatch.matchedName
+    );
+
+    console.log(
+        "Score:",
+        bestMatch.score
+    );
+
+    console.log(
+        "=========================================="
+    );
+
+
+    return bestMatch.product;
+
+}
+
 export async function sendChatMessage(req, res) {
 
     try {
@@ -1119,18 +1388,10 @@ const availableProducts =
 // First try to find a product name
 // directly mentioned in the current message
 let ingredientCheckProduct =
-    availableProducts.find((product) => {
-
-        if (!product.name) {
-            return false;
-        }
-
-        return userMessage.includes(
-            product.name
-                .toLowerCase()
-                .trim()
-        );
-    });
+    findBestProductMatch(
+        userMessage,
+        availableProducts
+    );
 
 
 // ------------------------------------------
@@ -3630,82 +3891,15 @@ if (!isPriceOrStockQuestion) {
     }
 }
         
-        let matchedProduct = null;
+        // ==================================================
+// FIND BEST PRODUCT MATCH
+// ==================================================
 
-
-        matchedProduct =
-            products.find(
-                (product) => {
-
-                    const productName =
-                        product.name
-                            .toLowerCase()
-                            .trim();
-
-
-                    // Normal product name
-
-                    if (
-                        productName &&
-                        userMessage.includes(
-                            productName
-                        )
-                    ) {
-
-                        return true;
-
-                    }
-
-
-                    // Alternative product names
-
-                    if (
-                        Array.isArray(
-                            product.altNames
-                        ) &&
-                        product.altNames.length > 0
-                    ) {
-
-                        const matchedAltName =
-                            product.altNames.some(
-                                (altName) => {
-
-                                    if (
-                                        !altName ||
-                                        altName.trim() === ""
-                                    ) {
-
-                                        return false;
-
-                                    }
-
-
-                                    return userMessage.includes(
-
-                                        altName
-                                            .toLowerCase()
-                                            .trim()
-
-                                    );
-
-                                }
-                            );
-
-
-                        if (matchedAltName) {
-
-                            return true;
-
-                        }
-
-                    }
-
-
-                    return false;
-
-                }
-            );
-
+let matchedProduct =
+    findBestProductMatch(
+        userMessage,
+        products
+    );
          // ==================================================
 // VERIFY DIRECT PRODUCT-DETAIL REQUEST
 // Prevent GlowGuide from returning a random/partial product
@@ -3715,40 +3909,10 @@ if (!isPriceOrStockQuestion) {
 if (requestedProductText) {
 
     let exactRequestedProduct =
-        products.find((product) => {
-
-            if (!product || !product.name) {
-                return false;
-            }
-
-            const productName =
-                String(product.name)
-                    .toLowerCase()
-                    .trim();
-
-            if (productName === requestedProductText) {
-                return true;
-            }
-
-            const alternativeNames =
-                Array.isArray(product.altNames)
-                    ? product.altNames
-                    : [];
-
-            return alternativeNames.some((altName) => {
-
-                if (!altName) {
-                    return false;
-                }
-
-                return (
-                    String(altName)
-                        .toLowerCase()
-                        .trim() ===
-                    requestedProductText
-                );
-            });
-        });
+    findBestProductMatch(
+        requestedProductText,
+        products
+    );
     // ------------------------------------------
 // HANDLE PRODUCT PRONOUNS USING LAST PRODUCT
 // ------------------------------------------
