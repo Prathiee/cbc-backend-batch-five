@@ -5,6 +5,7 @@ import productRouter from './routs/productRouter.js';
 import userRouter from './routs/userRouter.js';
 import jwt from "jsonwebtoken";
 import orderRouter from './routs/orderRouter.js';
+import wishlistRouter from './routs/wishlistRouter.js';
 import recommendationRouter from "./routs/recommendationRouter.js";
 import reviewRouter from "./routs/reviewRouter.js";
 import contactRouter from "./routs/contactRouter.js";
@@ -58,9 +59,10 @@ mongoose.connect(process.env.MONGODB_URL).then(()=>{
 })
 
 
-app.use("/products", productRouter)
-app.use("/users", userRouter)
-app.use("/orders", orderRouter)
+app.use("/products", productRouter);
+app.use("/users", userRouter);
+app.use("/orders", orderRouter);
+app.use("/wishlist", wishlistRouter);
 app.use("/recommendation", recommendationRouter);
 app.use("/reviews", reviewRouter);
 app.use("/contacts", contactRouter);
